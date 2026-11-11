@@ -8,7 +8,7 @@ Status values: `todo`, `in progress`, `accepted`. Update this file when a task i
 | 2 | Engine | Medium | 1 | accepted |
 | 3 | Combat simulation | Careful | 1 | in progress |
 | 4 | Rig and neon rendering | Careful | 1 | in progress |
-| 5 | Research and lore | Medium | 1 | in progress |
+| 5 | Research and lore | Medium | 1 | accepted |
 | 6 | Fight scene and HUD | Medium | 2, 3, 4 | todo |
 | 7 | Fighters Rei and Vira | Careful | 6 | todo |
 | – | Checkpoint: user playtests the prototype | – | 7 | todo |

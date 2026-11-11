@@ -7,7 +7,8 @@
 - `docs/SPEC.md` — game design and architecture. Change only with the user's agreement.
 - `docs/PLAN.md` — task list, briefs, status.
 - `docs/BRIEF.md` — the user's original project brief (full lists of styles, weapons, gods).
-- `docs/LORE.md` — (task 5) mythology research, game fiction, future roster backlog.
+- `docs/LORE.md` — mythology research (Tradition) and game fiction (In this game) per fighter and arena, future roster backlog, sources.
+- `src/content/lore.ts` — typed lore text for the in-game lore screen; keep in step with `docs/LORE.md`.
 - `package.json` — npm scripts and pinned devDependencies.
 - `tsconfig.json` — strict TypeScript settings (typecheck only, no emit).
 - `vite.config.ts` — Vite dev server (port 5173, strictPort) and Vitest config.

@@ -17,8 +17,8 @@ To resume: run `/savvy-flow continue the project from HANDOFF.md`, or just read 
 Last updated: 2026-11-11
 
 - Phase: foundation. Scaffold is in (Vite 8, TypeScript 6.0, Vitest 5, ESLint 10); the page shows a placeholder title.
-- Accepted tasks: 1 (scaffold), 2 (engine: loop, input, menu input, scene manager; `?debug=input` shows live inputs).
-- In progress: tasks 3 (combat sim), 4 (rig and rendering), 5 (lore), delegated in parallel. If a session ends mid-way, check `git status`: uncommitted work in `src/engine`, `src/sim`, `src/render`, `docs/LORE.md` is unreviewed worker output. Review it against the briefs in `docs/PLAN.md` before committing.
+- Accepted tasks: 1 (scaffold), 2 (engine: loop, input, menu input, scene manager; `?debug=input` shows live inputs), 5 (lore: `docs/LORE.md`, `src/content/lore.ts`).
+- In progress: tasks 3 (combat sim), 4 (rig and rendering), delegated in parallel. If a session ends mid-way, check `git status`: uncommitted work in `src/engine`, `src/sim`, `src/render`, `docs/LORE.md` is unreviewed worker output. Review it against the briefs in `docs/PLAN.md` before committing.
 
 ## Next step
 
@@ -43,3 +43,4 @@ Last updated: 2026-11-11
 - TypeScript is pinned to 6.0.x because typescript-eslint does not support 7 yet.
 - The sim lint rule forbids `../` imports, so keep `src/sim/` flat (no subfolders) or adjust the rule in `eslint.config.js`.
 - The user has seen the screen mockups (fight screen, character select) and has not asked for changes so far.
+- Lore review decisions: Rei's ultimate was renamed from "Storm of Kusanagi" to "Eightfold Storm" (Kusanagi is one of Japan's Imperial Regalia; Rei's katana is his own). Thor and Sun Wukong stay playable as the user chose, though both have living veneration; the lore says so respectfully. Nezha and Loki in the backlog need the user's confirmation before being made playable.

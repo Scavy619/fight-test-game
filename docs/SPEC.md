@@ -101,7 +101,7 @@ Elements are tags used for particles and sound: `wind, fire, earth, lightning, s
 
 | Fighter | Kind | Style, weapon | Stats | specialN | specialF | specialD | Ultimate |
 |---|---|---|---|---|---|---|---|
-| **Rei Kurogane** | Original champion who channels Susanoo | Kenjutsu, ninjutsu; katana | Fast, low health (900) | Shuriken (projectile) | Wind-slash dash | Shadow step (teleport behind) | Storm of Kusanagi: multi-slash rush |
+| **Rei Kurogane** | Original champion who channels Susanoo | Kenjutsu, ninjutsu; katana | Fast, low health (900) | Shuriken (projectile) | Wind-slash dash | Shadow step (teleport behind) | Eightfold Storm: eight-slash rush |
 | **Vira** | Original champion who channels Kartikeya | Kalaripayattu; vel spear | Balanced (1000), long reach | Spiral Orb (slow energy sphere) | Spear lunge | Leaping flame arc (anti-air) | Vel of the Six Fires: spear rain |
 | **Sun Wukong** | Himself | Wushu; Ruyi staff | Agile (950), high jump | Clone strike (delayed clone attacks) | Cloud dash (passes through) | Staff pillar slam (earth, low) | Havoc in Heaven: giant staff |
 | **Thor** | Himself | Hammer; glima wrestling | Slow, tough (1150) | Hammer throw (returns) | Charging shoulder | Glima throw (command throw) | Mjolnir's Judgment: lightning column |
@@ -111,7 +111,7 @@ Elements are tags used for particles and sound: `wind, fire, earth, lightning, s
 Each arena is a procedural parallax scene (far, mid, near layers, ground, ambient particles) with its own palette:
 - **Storm Shrine** (Japan): neon torii and shimenawa over a dark sea, rain, distant lightning.
 - **Lamp Citadel** (India): temple gopuram silhouettes at dusk, rows of oil lamps, drifting embers.
-- **Bifrost Bridge** (Norse): crystalline bridge, aurora bands, falling snow, Yggdrasil silhouette.
+- **Bifrost Bridge** (Norse): bridge of crystal light with a burning red band, aurora bands, falling snow, Yggdrasil silhouette.
 
 ## 7. Mythology and respect rules
 
