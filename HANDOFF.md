@@ -14,17 +14,24 @@ To resume: run `/savvy-flow continue the project from HANDOFF.md`, or just read 
 
 ## Status
 
-Last updated: 2026-11-11
+Last updated: 2026-11-11 (session paused when the usage limit was reached)
 
-- Phase: foundation. Scaffold is in (Vite 8, TypeScript 6.0, Vitest 5, ESLint 10); the page shows a placeholder title.
-- Accepted tasks: 1 (scaffold), 2 (engine: loop, input, menu input, scene manager; `?debug=input` shows live inputs), 3 (combat sim: 104 tests), 5 (lore: `docs/LORE.md`, `src/content/lore.ts`).
-- In progress: task 4 (rig and rendering), delegated. If a session ends mid-way, check `git status`: uncommitted work in `src/engine`, `src/sim`, `src/render`, `docs/LORE.md` is unreviewed worker output. Review it against the briefs in `docs/PLAN.md` before committing.
+- Phase: foundation, 4 of 14 tasks accepted and committed.
+- Accepted: 1 scaffold, 2 engine (loop, input, menu input, scene manager; `?debug=input` shows live inputs), 3 combat sim (104 tests), 5 lore (`docs/LORE.md`, `src/content/lore.ts`).
+- Task 4 (rig and neon rendering, `savvy-careful`) was still running when the session paused. Its output is UNREVIEWED and UNCOMMITTED: `src/render/**`, `gallery.html`, `src/gallery.ts`. It may be incomplete.
+- Tasks 6 to 14 not started.
 
 ## Next step
 
-1. Review and commit tasks 2 to 5 (one commit each).
-2. Delegate task 6 (fight scene and HUD), then task 7 (Rei and Vira).
-3. Stop for the user's playtest of the prototype.
+1. Task 4: run `npx vitest run src/render`, `npm run lint`, `npm run build`; open `npm run dev` at `/gallery.html` and judge the look against SPEC 3.4 and 4 and the task 4 brief in `docs/PLAN.md`. If the worker was cut off, send the defects or the remaining work to a `savvy-careful` worker. Then commit, add its files to `filemap.md`, mark it accepted in `docs/PLAN.md`.
+2. Delegate task 6 (fight scene and HUD, `savvy-medium`), review, commit.
+3. Delegate task 7 (Rei and Vira, `savvy-careful`), review, commit.
+4. Stop for the user's playtest of the two-player prototype.
+5. Then tasks 8 to 12 in parallel, 13, 14 (see `docs/PLAN.md`).
+
+## savvy-progress panel (optional, not finished)
+
+The user asked for the savvy-flow progress bar and agents panel. The repo is cloned at `C:Usersittuclaude-kit` (github.com/johnnyvizz/claude-kit). The mod `plugins/savvy-progress` was scanned: no network, file or shell calls; it only registers two progress tools, a `/agents-info` command, UI panes, and appends one progress-reporting line to `savvy-*` worker briefs. NOT yet done: adding it to `C:Usersittu.claudesettings.json` as `"env": { "CLAUDE_CODE_PLUGIN_DIRS": "~/claude-kit/plugins/savvy-progress" }` (the user approved this), then starting a new session. Unknowns: whether `~` expands on Windows, and the mod was tested on Claude Code 2.1.286 while the CLI here is 2.1.239. Alternative: `/plugin marketplace add johnnyvizz/claude-kit` then `/plugin install savvy-progress@claude-kit`. Do not install the `savvy-flow` plugin too; the skill and agents are already installed by hand.
 
 ## Decisions made (do not reopen without the user)
 
