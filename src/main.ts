@@ -1,18 +1,34 @@
-import { setupCanvas } from './engine/canvas';
+import {
+  InputManager,
+  MenuInput,
+  SceneManager,
+  createInputDebugScene,
+  createLoop,
+  createPlaceholderTitleScene,
+  setupCanvas,
+  stepGame,
+  type GameContext,
+} from './engine';
 
 const canvas = document.getElementById('game');
 if (!(canvas instanceof HTMLCanvasElement)) throw new Error('Missing #game canvas');
 
-let draw = (): void => {};
-const { ctx, width, height } = setupCanvas(canvas, () => draw());
+const scenes = new SceneManager();
+// Redraw immediately after a resize clears the backing store. setupCanvas calls this
+// synchronously before returning, so it starts as a no-op.
+let redraw = (): void => {};
+const { ctx, width, height } = setupCanvas(canvas, () => redraw());
+redraw = (): void => scenes.render(ctx, 0);
 
-draw = (): void => {
-  ctx.fillStyle = '#070A14';
-  ctx.fillRect(0, 0, width, height);
-  ctx.fillStyle = '#2FF3E0';
-  ctx.font = "italic 800 96px 'Segoe UI', system-ui, sans-serif";
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('MYTHIC NEON', width / 2, height / 2);
-};
-draw();
+const input = new InputManager();
+input.attach();
+
+const game: GameContext = { ctx, width, height, input, scenes, menu: new MenuInput() };
+
+const debug = new URLSearchParams(window.location.search).get('debug');
+scenes.set(debug === 'input' ? createInputDebugScene(game) : createPlaceholderTitleScene(game));
+
+createLoop({
+  update: () => stepGame(game),
+  render: (alpha) => scenes.render(ctx, alpha),
+}).start();

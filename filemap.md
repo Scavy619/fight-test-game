@@ -14,8 +14,14 @@
 - `eslint.config.js` — ESLint flat config, including the `src/sim` purity rules.
 - `index.html` — page shell with the single `#game` canvas.
 - `.claude/launch.json` — preview config running `npm run dev` on 5173.
-- `src/main.ts` — entry point: canvas setup and current placeholder draw.
+- `src/main.ts` — entry point: wires canvas, input, menu, scenes and loop; picks the start scene.
 - `src/engine/canvas.ts` — 1280x720 logical canvas, letterbox scaling, DPR and resize handling.
+- `src/engine/loop.ts` — fixed 60 Hz loop: pure `accumulate` step accounting plus `createLoop`; pauses while the tab is hidden.
+- `src/engine/input.ts` — key bindings as data, key/gamepad to `InputFrame` mapping, `InputManager`.
+- `src/engine/menu.ts` — edge-triggered menu actions with direction repeat, combined and per player.
+- `src/engine/scenes.ts` — `Scene` interface and `SceneManager` stack (set, push, pop).
+- `src/engine/context.ts` — `GameContext` type passed to scenes, and `stepGame`.
+- `src/engine/debugScenes.ts` — placeholder title scene and the `?debug=input` scene.
 - `src/sim/types.ts` — `InputFrame` and `EMPTY_INPUT`.
 - `src/sim/` — (task 3) pure combat simulation and its tests.
 - `src/engine/` — (task 2) loop, input, scene manager.

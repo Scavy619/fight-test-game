@@ -17,8 +17,8 @@ To resume: run `/savvy-flow continue the project from HANDOFF.md`, or just read 
 Last updated: 2026-11-11
 
 - Phase: foundation. Scaffold is in (Vite 8, TypeScript 6.0, Vitest 5, ESLint 10); the page shows a placeholder title.
-- Accepted tasks: 1 (scaffold).
-- In progress: tasks 2 (engine), 3 (combat sim), 4 (rig and rendering), 5 (lore), delegated in parallel. If a session ends mid-way, check `git status`: uncommitted work in `src/engine`, `src/sim`, `src/render`, `docs/LORE.md` is unreviewed worker output. Review it against the briefs in `docs/PLAN.md` before committing.
+- Accepted tasks: 1 (scaffold), 2 (engine: loop, input, menu input, scene manager; `?debug=input` shows live inputs).
+- In progress: tasks 3 (combat sim), 4 (rig and rendering), 5 (lore), delegated in parallel. If a session ends mid-way, check `git status`: uncommitted work in `src/engine`, `src/sim`, `src/render`, `docs/LORE.md` is unreviewed worker output. Review it against the briefs in `docs/PLAN.md` before committing.
 
 ## Next step
 
