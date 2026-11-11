@@ -16,15 +16,15 @@ To resume: run `/savvy-flow continue the project from HANDOFF.md`, or just read 
 
 Last updated: 2026-11-11
 
-- Phase: setup. Spec, plan and handoff docs written. No code yet.
-- Accepted tasks: none.
-- In progress: design mockups and spec approval by the user.
+- Phase: foundation. Scaffold is in (Vite 8, TypeScript 6.0, Vitest 5, ESLint 10); the page shows a placeholder title.
+- Accepted tasks: 1 (scaffold).
+- In progress: tasks 2 (engine), 3 (combat sim), 4 (rig and rendering), 5 (lore), delegated in parallel. If a session ends mid-way, check `git status`: uncommitted work in `src/engine`, `src/sim`, `src/render`, `docs/LORE.md` is unreviewed worker output. Review it against the briefs in `docs/PLAN.md` before committing.
 
 ## Next step
 
-1. User approves `docs/SPEC.md` and `docs/PLAN.md` (after seeing the screen mockups).
-2. Delegate task 1 (scaffold) to `savvy-light`, review, commit.
-3. Delegate tasks 2, 3, 4, 5 in parallel.
+1. Review and commit tasks 2 to 5 (one commit each).
+2. Delegate task 6 (fight scene and HUD), then task 7 (Rei and Vira).
+3. Stop for the user's playtest of the prototype.
 
 ## Decisions made (do not reopen without the user)
 
@@ -36,8 +36,10 @@ Last updated: 2026-11-11
 
 ## How to run
 
-Not yet scaffolded. After task 1: `npm install`, then `npm run dev` and open http://localhost:5173.
+`npm install`, then `npm run dev` and open http://localhost:5173.
 
 ## Known issues and notes
 
-- None yet.
+- TypeScript is pinned to 6.0.x because typescript-eslint does not support 7 yet.
+- The sim lint rule forbids `../` imports, so keep `src/sim/` flat (no subfolders) or adjust the rule in `eslint.config.js`.
+- The user has seen the screen mockups (fight screen, character select) and has not asked for changes so far.

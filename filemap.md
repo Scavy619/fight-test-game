@@ -8,6 +8,15 @@
 - `docs/PLAN.md` — task list, briefs, status.
 - `docs/BRIEF.md` — the user's original project brief (full lists of styles, weapons, gods).
 - `docs/LORE.md` — (task 5) mythology research, game fiction, future roster backlog.
+- `package.json` — npm scripts and pinned devDependencies.
+- `tsconfig.json` — strict TypeScript settings (typecheck only, no emit).
+- `vite.config.ts` — Vite dev server (port 5173, strictPort) and Vitest config.
+- `eslint.config.js` — ESLint flat config, including the `src/sim` purity rules.
+- `index.html` — page shell with the single `#game` canvas.
+- `.claude/launch.json` — preview config running `npm run dev` on 5173.
+- `src/main.ts` — entry point: canvas setup and current placeholder draw.
+- `src/engine/canvas.ts` — 1280x720 logical canvas, letterbox scaling, DPR and resize handling.
+- `src/sim/types.ts` — `InputFrame` and `EMPTY_INPUT`.
 - `src/sim/` — (task 3) pure combat simulation and its tests.
 - `src/engine/` — (task 2) loop, input, scene manager.
 - `src/render/` — (task 4) rig, animations, drawing, HUD, effects, arenas.
