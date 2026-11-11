@@ -17,8 +17,8 @@ To resume: run `/savvy-flow continue the project from HANDOFF.md`, or just read 
 Last updated: 2026-11-11
 
 - Phase: foundation. Scaffold is in (Vite 8, TypeScript 6.0, Vitest 5, ESLint 10); the page shows a placeholder title.
-- Accepted tasks: 1 (scaffold), 2 (engine: loop, input, menu input, scene manager; `?debug=input` shows live inputs), 5 (lore: `docs/LORE.md`, `src/content/lore.ts`).
-- In progress: tasks 3 (combat sim), 4 (rig and rendering), delegated in parallel. If a session ends mid-way, check `git status`: uncommitted work in `src/engine`, `src/sim`, `src/render`, `docs/LORE.md` is unreviewed worker output. Review it against the briefs in `docs/PLAN.md` before committing.
+- Accepted tasks: 1 (scaffold), 2 (engine: loop, input, menu input, scene manager; `?debug=input` shows live inputs), 3 (combat sim: 104 tests), 5 (lore: `docs/LORE.md`, `src/content/lore.ts`).
+- In progress: task 4 (rig and rendering), delegated. If a session ends mid-way, check `git status`: uncommitted work in `src/engine`, `src/sim`, `src/render`, `docs/LORE.md` is unreviewed worker output. Review it against the briefs in `docs/PLAN.md` before committing.
 
 ## Next step
 
@@ -44,3 +44,4 @@ Last updated: 2026-11-11
 - The sim lint rule forbids `../` imports, so keep `src/sim/` flat (no subfolders) or adjust the rule in `eslint.config.js`.
 - The user has seen the screen mockups (fight screen, character select) and has not asked for changes so far.
 - Lore review decisions: Rei's ultimate was renamed from "Storm of Kusanagi" to "Eightfold Storm" (Kusanagi is one of Japan's Imperial Regalia; Rei's katana is his own). Thor and Sun Wukong stay playable as the user chose, though both have living veneration; the lore says so respectfully. Nezha and Loki in the backlog need the user's confirmation before being made playable.
+- Sim notes for later tasks: `moveFrame` and `stateFrame` are 1-based; hitboxes are lower-left boxes relative to the feet centre (see `src/sim/geometry.ts`); there is an extra `land` state (4 frames after an air attack lands; draw it with the crouch pose); ultimate startup must exceed the 45-frame super freeze; throws exist only as a `throw: true` move property; `passThrough` frame ranges skip body push (for dashes and teleports); there is no juggle limit, so new fighters' frame data must be checked for infinites (the randomized combo test in `src/sim/data.test.ts` is the pattern).

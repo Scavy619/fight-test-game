@@ -23,7 +23,20 @@
 - `src/engine/scenes.ts` — `Scene` interface and `SceneManager` stack (set, push, pop).
 - `src/engine/context.ts` — `GameContext` type passed to scenes, and `stepGame`.
 - `src/engine/debugScenes.ts` — placeholder title scene and the `?debug=input` scene.
-- `src/sim/types.ts` — `InputFrame` and `EMPTY_INPUT`.
+- `src/sim/index.ts` — public sim API: `createMatch`, `step`, types, helpers, constants.
+- `src/sim/types.ts` — all sim types: `InputFrame`, `MoveDef`, `FighterDef`, `FighterState`, `Projectile`, `MatchState`, `Match`, `SimEvent`.
+- `src/sim/constants.ts` — tunable constants (stage, phases, meter, combo scaling, hitstop, chip, dodge, buffer, super freeze).
+- `src/sim/match.ts` — `createMatch`, `step`, round and match flow.
+- `src/sim/fighter.ts` — fighter state machine: timers, input decisions, cancels, ultimate, landing.
+- `src/sim/physics.ts` — gravity, pushback with corner transfer, stage bounds, body push.
+- `src/sim/combat.ts` — hit collection, block or hit decision, throws, damage, meter, hitstop.
+- `src/sim/projectiles.ts` — projectile spawn, motion, clash, hits.
+- `src/sim/geometry.ts` — rects, hitbox to world conversion (convention documented here), overlap tests.
+- `src/sim/moves.ts` — read-only helpers over move frame data.
+- `src/sim/input.ts` — edge detection and the 6-frame press buffer.
+- `src/sim/validate.ts` — `validateFighterDef(def)` for content tests; run it on every new fighter.
+- `src/sim/testFighter.ts` — complete generic 10-slot fighter used by tests and as a stand-in.
+- `src/sim/testHelpers.ts`, `src/sim/*.test.ts` — input scripting helpers and unit tests.
 - `src/sim/` — (task 3) pure combat simulation and its tests.
 - `src/engine/` — (task 2) loop, input, scene manager.
 - `src/render/` — (task 4) rig, animations, drawing, HUD, effects, arenas.
