@@ -1,16 +1,17 @@
-# Mythic Neon: game specification
+# ASTRA: game specification
 
-Working title: **MYTHIC NEON**. A local two-player 2D fighting game in the browser: martial arts, weapons, elemental powers and world mythology, drawn as neon procedural figures.
+Title: **ASTRA** (engine and package name `mythic-neon`; the prototype was called Mythic Neon). A single-player mythic-fantasy 2D fighting game in the browser, inspired by Indian epic traditions, drawn as neon procedural figures. Two players on one keyboard or two pads remain supported. The campaign and lore are an original fictional adaptation inspired by epic traditions, not a retelling, and the game says so on the title, campaign and gallery screens.
 
 ## 1. Goals and non-goals
 
-Goals (first version):
-- Local versus (two players, one keyboard or gamepads) and practice against AI (easy, normal, hard).
-- 4 fighters, 3 arenas, best-of-three rounds, health and meter, combos, block, dodge, three specials and one ultimate per fighter, cinematic finisher.
-- Character select, arena select, results, pause, controls help, lore screen.
-- Data-driven content: a new fighter or arena is one new file plus a registry entry.
+Goals (ASTRA, phase 2; phase 1 was the four-fighter prototype):
+- Eight playable heroes from the "Astra: Eight Heroes" brief (section 5), each with a distinct weapon style, combat role, bio, campaign role and unlock condition.
+- Modes: Story Campaign (eight chapters, choices, saves), Arcade (ladder with a rival and a per-hero ending), Versus CPU (easy, normal, hard), Two Players, Practice (dummy modes, reset, move list), Character Gallery, Controls.
+- Best-of-three rounds, health and meter, combos, block (button or hold back), dodge, grab, power strike, three specials and one ultimate per hero; readable startup, impact and recovery with counterplay; status effects named in text, never by colour alone.
+- Data-driven content: a hero is one file (`src/content/heroes/<id>.ts`) whose single profile feeds the select screen, gallery, practice move list and combat.
+- Saves in `localStorage` (versioned, safe defaults, in-memory fallback).
 
-Non-goals: online play, story mode, sprite or image assets, mobile touch, more than 4 fighters or 3 arenas.
+Non-goals: online play, image, font or audio asset files, mobile touch, paid services or accounts, parallax arenas and audio (later phases).
 
 ## 2. Stack
 
@@ -97,7 +98,7 @@ Futuristic neon on near-black, anime-style silhouettes.
 - Hit sparks, element particles, screen shake and a brief white flash on heavy hits. Super freeze darkens the arena to 30% and draws speed lines behind the caster.
 - Text: `'Segoe UI', system-ui, sans-serif`, weight 800, italic, uppercase, letter-spaced.
 
-Accent colours: Rei `#2FF3E0` (cyan), Vira `#FF8A2A` (fire orange), Sun Wukong `#5CFF8A` (jade), Thor `#9D7BFF` (storm violet). P1 HUD tint `#3DA9FF`, P2 HUD tint `#FF4D6D`.
+Accent colours per hero come from the brief's palettes (section 5). P1 HUD tint `#3DA9FF`, P2 HUD tint `#FF4D6D`. Status effects (shield, armour, slowed, stance, charging) are shown as short text tags over the fighter as well as by colour.
 
 HUD: health bars top left and right draining toward the centre with a delayed white "damage ghost"; fighter names under the bars; round pips next to the names; timer top centre; meter bars bottom left and right, pulsing when full; combo counter at the side of the attacker; centre announcer text (ROUND 1, FIGHT, K.O., name WINS).
 
@@ -105,32 +106,38 @@ HUD: health bars top left and right draining toward the centre with a delayed wh
 
 Elements are tags used for particles and sound: `wind, fire, earth, lightning, shadow`.
 
-| Fighter | Kind | Style, weapon | Stats | specialN | specialF | specialD | Ultimate |
-|---|---|---|---|---|---|---|---|
-| **Rei Kurogane** | Original champion who channels Susanoo | Kenjutsu, ninjutsu; katana | Fast, low health (900) | Shuriken (projectile) | Wind-slash dash | Shadow step (teleport behind) | Eightfold Storm: eight-slash rush |
-| **Vira** | Original champion who channels Kartikeya | Kalaripayattu; vel spear | Balanced (1000), long reach | Spiral Orb (slow energy sphere) | Spear lunge | Leaping flame arc (anti-air) | Vel of the Six Fires: spear rain |
-| **Sun Wukong** | Himself | Wushu; Ruyi staff | Agile (950), high jump | Clone strike (delayed clone attacks) | Cloud dash (passes through) | Staff pillar slam (earth, low) | Havoc in Heaven: giant staff |
-| **Thor** | Himself | Hammer; glima wrestling | Slow, tough (1150) | Hammer throw (returns) | Charging shoulder | Glima throw (command throw) | Mjolnir's Judgment: lightning column |
+Every hero has one rendered weapon; secondary weapons appear through projectiles and visuals (arrows from a bow, a thrown axe). Each hero also has the shared grab (`throw`) and power strike (`power`) slots.
+
+| Hero | Title, palette, element | Rendered weapon | Health · pace | specialN | specialF | specialD | Ultimate | Unlock |
+|---|---|---|---|---|---|---|---|---|
+| **Arjuna** | The Astra-Bound Archer · indigo, bronze, saffron · wind | bow (short blade for close normals) | 900 · fast | Arrow Volley (fan arrow, 2 hits, short range) | Piercing Astra (charged arrow, pierces a guard raised late) | Archer's Step (invulnerable side-step) | Celestial Salvo: skyward shot, three warned arrow lanes | start |
+| **Bhima** | The Mountain's Strength · forest green, bronze, stone · earth | mace (gada) | 1150 · slow | Earthsplitter (ground shockwave) | Iron Grip (command grab) | Shoulder Rush (armoured dash) | Mountain's Wrath: heavy blows into a shockwave | start |
+| **Karna** | The Sun's Chosen · gold, carmine, navy · fire | spear (arrows as projectiles) | 1000 · medium | Sunline Shot (fast arrow) | Spearpoint Lunge | Radiant Armor (shield: absorbs one light or heavy hit) | Solar Descent: leap onto a marked landing zone | chapter 4 |
+| **Abhimanyu** | The Circle Breaker · emerald, silver, amber · lightning | sword | 900 · fastest | Spinning Edge | Breakthrough Dash (passes through, punishable landing) | Formation Breaker (three pushing strikes) | Chakravyuha Break: three marked paths, interruptible finish | start |
+| **Ghatotkacha** | The Night-Born Guardian · indigo, violet, silver · shadow | mace (tall, broad) | 1100 · medium, high jump | Phantom Double (decoy) | Shadow Leap | Nightfall Slam (marked crash) | Sky of Illusions: decoys, then a telegraphed slam | chapter 5 |
+| **Parashurama** | The Axe-Bearing Teacher · ochre, forest green, iron · earth | axe (parashu) | 1050 · medium-slow | Return Arc (returning axe) | Crescent Axe (wide, visible startup) | Tempered Stance (shield: halves one hit, broken by heavy) | Storm of the Parashu: sweeps with gaps | start |
+| **Ekalavya** | The Self-Taught Archer · moss, bark, copper · wind | bow (knife for close normals) | 950 · fast | Swift Arrow | Snare (slow-field trap) | Hunter's Step (back-step and arrow) | Warden's Net: slow field and arrow rain | chapter 2 |
+| **Ashwatthama** | The Wounded Veteran · charcoal, crimson, electric blue · lightning | sword (bow stance via projectiles) | 1000 · medium | Astra Burst (unstable projectile) | Stance Shift (blade ⇄ bow) | stance-dependent (rising cut / short volley) | Unstable Astra: three telegraphed stages | finish the campaign, or clear Arcade |
+
+Starting roster: Arjuna, Bhima, Abhimanyu, Parashurama. Unlock conditions are always shown in the interface.
 
 ## 6. Arenas
 
-Each arena is a procedural parallax scene (far, mid, near layers, ground, ambient particles) with its own palette:
-- **Storm Shrine** (Japan): neon torii and shimenawa over a dark sea, rain, distant lightning.
-- **Lamp Citadel** (India): temple gopuram silhouettes at dusk, rows of oil lamps, drifting embers.
-- **Bifrost Bridge** (Norse): bridge of crystal light with a burning red band, aurora bands, falling snow, Yggdrasil silhouette.
+One procedural stage (`src/render/stage.ts`) with a palette per chapter and mode (sky, horizon glow, grid colours). Parallax arenas are a later phase.
 
 ## 7. Mythology and respect rules
 
-- Figures worshipped today as major deities (Shiva, Vishnu, Kali, Durga, Kartikeya, Amaterasu, Susanoo and others) are never playable and never shown being struck. They appear as patrons whose power an original champion channels.
-- Legendary heroes and tricksters long depicted as fighters in popular retellings (Sun Wukong, Thor) are playable as themselves.
-- `docs/LORE.md` and the in-game lore screen give, per fighter and arena, two clearly labelled parts: **Tradition** (what the source mythology says) and **In this game** (our fiction).
-- No real anime names or characters. "Spiral Orb" is our own energy-sphere move.
+- The roster is drawn from epic warriors (Mahabharata figures and, by the user's explicit decision, Parashurama) and they are playable as themselves. Figures worshipped today as major deities (Shiva, Vishnu, Durga, Kali, Hanuman, Rama and others) are never playable, never shown being struck and never antagonists; they may be named in Tradition text or as patrons only.
+- No sacred figure is the butt of a joke; no revered figure is a villain. Ashwatthama is a complex antagonist with motives, never a monster. Women characters, where they appear in dialogue, have agency; no exploitative depictions of humiliation or violence. No gore, no sexualised costume, no "exotic" decoration: distinct armour, weapons, silhouettes and palettes instead.
+- The campaign is an original fiction (the Hollow Astra) inspired by epic themes; the game states that it is a fictional adaptation and does not claim to retell any tradition or regional version.
+- `docs/LORE.md` and the gallery give, per hero, two clearly labelled parts: **Tradition** (what the sources say, with references) and **In this game** (our fiction).
+- No real anime names or characters.
 
-## 8. Definition of done (first version)
+## 8. Definition of done (ASTRA)
 
 - `npm run test`, `npm run lint`, `npm run build` pass.
-- Both modes playable start to finish through menus; all 4 fighters and 3 arenas selectable.
-- Every fighter has all 12 move slots (including the grab and the power strike), animations for every state (`charge` may use the shared base animation), and an ultimate with super freeze.
-- AI at three difficulties is beatable on easy and puts up a fight on hard.
-- AI-versus-AI balance run shows no pairing worse than about 60/40.
+- Every mode is playable start to finish through the menus by keyboard, mouse and gamepad; locked content shows its unlock condition; saves survive a reload.
+- Every hero has all 12 move slots, animations for every move, an ultimate with super freeze, a profile (title, identity, bio, loadout, move descriptions with counterplay, campaign role, unlock) and lore.
+- The campaign's eight chapters run end to end with at least one choice that changes a fight, dialogue, reward or order.
+- AI at three difficulties is beatable on easy and puts up a fight on hard; the AI-versus-AI balance run shows no pairing worse than about 60/40 at hard.
 - Holds 60 fps on a normal laptop in Chrome.

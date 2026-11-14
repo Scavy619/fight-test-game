@@ -60,14 +60,17 @@
 - `src/render/controlsHelp.ts` — on-screen controls text (one source for the key names): `drawControlsStrip` above the meters in the fight, `drawControlsPanel` for the pause overlay and the mode select.
 - `src/render/stage.ts` — placeholder arena (`drawStage`, `GROUND_Y`); real arenas replace it in task 11.
 - `src/render/sparks.ts` — placeholder hit and block sparks; task 8 replaces them with particles.
-- `src/content/types.ts` — `FighterEntry { def, look, anims }`.
 - `src/content/fighters/index.ts` — fighter registry: `FIGHTERS`, `FIGHTER_ORDER`, `FighterId`. Register new fighters here.
 - `src/content/fighters/rei.ts`, `vira.ts` — each fighter's def (stats, 10 moves), look, animations and move visuals. Copy one as the template for a new fighter.
 - `src/content/fighters/*.test.ts` — content tests every fighter must pass: validation, animation lengths, weapon tip versus hitbox, combo bounds, scripted specials.
 - `src/render/moveVisuals.ts` — data-driven move visuals (`column`, `burst`, `streak`) spawned from sim `fx` tags via `FighterEntry.visuals`.
 - `src/scenes/fight.ts` — the fight scene: runs the sim, animators, HUD, shake, flash; `FightConfig` takes controllers (AI hook) and event listeners (effects, audio hook). Backquote toggles the hitbox debug overlay.
 - `src/scenes/pause.ts` — minimal pause overlay; heavy (back) leaves to the menu when the fight has `onExit`.
-- `src/scenes/modeSelect.ts` — interim title and mode select (two players, solo easy/normal/hard) and `startMode`; task 10 replaces it with the real menus. Also the controls summary shown on screen.
+- `src/scenes/mainMenu.ts` — ASTRA title and main menu (Story, Arcade, Versus CPU, Two Players, Practice, Gallery, Controls; unfinished modes disabled with the slice named), `startMode` (also the `?mode=` deep link), the solo mouse controller and the controls gate before the first fight.
+- `src/scenes/listMenu.ts` — shared `ListMenu` (keyboard, mouse, pad), menu backdrop, ASTRA wordmark, adaptation notice.
+- `src/scenes/controlsScreen.ts` — full controls screen; sets `save.seenControls`.
+- `src/engine/save.ts` — `SaveStore`: versioned localStorage save (unlocks, campaign progress, arcade clears, settings) with safe defaults and an in-memory fallback.
+- `src/content/types.ts` — `FighterEntry`, `HeroProfile`, `MoveInfo`, `UnlockRule`, `ProjectileLook`, `HeroEntry` (the one data source for select, gallery, practice and combat).
 - `src/ai/controller.ts` — `createAi(difficulty | AiParams, seed)`: the AI opponent (delayed view of the opponent, think timer, block/dodge, punish, anti-air, cancels, ultimate), `DIFFICULTIES`, `moveReach`.
 - `src/ai/rng.ts` — seeded RNG (mulberry32) used by the AI.
 - `src/ai/simulate.ts` — `runAiMatch`: headless AI-versus-AI match (tests, task 14 balance runner).

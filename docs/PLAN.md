@@ -22,6 +22,22 @@ Status values: `todo`, `in progress`, `accepted`. Update this file when a task i
 
 Tasks 2–5 can run in parallel; so can 8–12.
 
+## Phase 2: ASTRA (approved 2026-11-15)
+
+The user replaced the phase-1 roster and scope with the ASTRA brief (eight heroes, campaign, modes; see `docs/SPEC.md` sections 1, 5 and 7). Phase-1 tasks 8, 10–14 are superseded by the slices below; their briefs stay as reference. Each slice is implemented in the main session, verified (test, lint, build, browser) and committed separately with the user's go-ahead.
+
+| # | Slice | Status |
+|---|---|---|
+| A1 | Foundation: ASTRA docs, hero profile types, save system, title and main menu shell, controls screen gate | in progress |
+| A2 | Sim mechanics: `moveFor` and stances, shields, late-guard pierce, zones (slow, strike, decoy, mark), returning projectiles, slow fields; validator; AI zone awareness | todo |
+| A3 | Render kit: bow, mace, axe, sword; new head and ribbon styles; projectile looks; zone and decoy drawing; status labels; procedural portraits; stage palettes | todo |
+| A4 | Heroes Arjuna and Bhima; remove Rei and Vira; character select v1; Versus CPU and Two Players on the new roster | todo |
+| A5 | Heroes Ekalavya and Abhimanyu; Practice mode; Gallery scene | todo |
+| A6 | Heroes Karna and Ghatotkacha; Arcade mode and unlocks | todo |
+| A7 | Heroes Parashurama and Ashwatthama (stances); balance script and AI tuning | todo |
+| A8 | Campaign: data for eight chapters, chapter scenes, choices, saves, tutorial hints, unlocks | todo |
+| A9 | Polish: status labels and accessibility pass, chapter palettes, pause move list, final docs and summary | todo |
+
 ## Briefs
 
 **1. Scaffold.** Create the Vite + TypeScript (strict) project with Vitest and ESLint flat config, npm scripts `dev`, `build`, `test` (vitest run), `lint`, `typecheck`. Create the folders in SPEC 3 with an `index.ts` or placeholder each. `index.html` with a single full-window canvas; `src/main.ts` sets up the 1280x720 logical canvas with letterbox scaling and draws a placeholder title. Create `src/sim/types.ts` with `InputFrame` (SPEC 3.2) and one trivial passing test. Add `.claude/launch.json` running `npm run dev` on port 5173. Verify: all scripts pass, dev server shows the placeholder.

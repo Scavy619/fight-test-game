@@ -1,5 +1,5 @@
 // Clickable action buttons for solo mouse play: BLOCK, DODGE, GRAB, POWER, SPECIAL, ULTIMATE.
-// Pure layout and drawing; the solo controller in `src/scenes/modeSelect.ts` reads the hit
+// Pure layout and drawing; the solo controller in `src/scenes/mainMenu.ts` reads the hit
 // test and feeds the sim. Sits above the meters (y 676), below the fight strip text.
 import type { InputFrame } from '../sim/types';
 import { HUD_FONT } from './hud';

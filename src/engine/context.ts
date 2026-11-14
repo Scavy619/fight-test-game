@@ -1,6 +1,7 @@
 import type { InputManager } from './input';
 import type { MenuInput } from './menu';
 import type { MouseInput } from './mouse';
+import type { SaveStore } from './save';
 import type { SceneManager } from './scenes';
 
 /** Shared services every scene receives. */
@@ -13,6 +14,8 @@ export interface GameContext {
   mouse: MouseInput;
   scenes: SceneManager;
   menu: MenuInput;
+  /** Unlocks, campaign progress, settings (localStorage with an in-memory fallback). */
+  save: SaveStore;
 }
 
 /**

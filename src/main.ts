@@ -4,6 +4,7 @@ import {
   LOGICAL_WIDTH,
   MenuInput,
   MouseInput,
+  SaveStore,
   SceneManager,
   canvasToLogical,
   createInputDebugScene,
@@ -12,7 +13,7 @@ import {
   stepGame,
   type GameContext,
 } from './engine';
-import { MODE_OPTIONS, createModeSelectScene, startMode } from './scenes';
+import { createMainMenuScene, isMode, startMode } from './scenes';
 
 const canvas = document.getElementById('game');
 if (!(canvas instanceof HTMLCanvasElement)) throw new Error('Missing #game canvas');
@@ -29,14 +30,14 @@ input.attach();
 const mouse = new MouseInput(canvasToLogical(canvas, LOGICAL_WIDTH, LOGICAL_HEIGHT));
 mouse.attach(canvas);
 
-const game: GameContext = { ctx, width, height, input, mouse, scenes, menu: new MenuInput() };
+const game: GameContext = { ctx, width, height, input, mouse, scenes, menu: new MenuInput(), save: new SaveStore() };
 
-// `?debug=input` shows live inputs; `?mode=versus|easy|normal|hard` skips the mode select.
+// `?debug=input` shows live inputs; `?mode=versus|easy|normal|hard` skips the menu.
 const params = new URLSearchParams(window.location.search);
-const mode = MODE_OPTIONS.find((o) => o.mode === params.get('mode'))?.mode;
+const mode = params.get('mode');
 if (params.get('debug') === 'input') scenes.set(createInputDebugScene(game));
-else if (mode) startMode(game, mode);
-else scenes.set(createModeSelectScene(game));
+else if (isMode(mode)) startMode(game, mode);
+else scenes.set(createMainMenuScene(game));
 
 createLoop({
   update: () => stepGame(game),

@@ -12,9 +12,16 @@ The project uses the `/savvy-flow` process: the main session is the orchestrator
 
 To resume: run `/savvy-flow continue the project from HANDOFF.md`, or just read "Next step" below and carry on.
 
-## Status
+## Phase 2: ASTRA (started 2026-11-15)
 
-Last updated: 2026-11-14 (task 9)
+The user approved a new direction: the game becomes **ASTRA**, a single-player mythic-fantasy fighter with eight heroes from their "Astra: Eight Heroes" art brief (Arjuna, Karna, Abhimanyu, Ghatotkacha, Parashurama, Ekalavya, Ashwatthama, Bhima), a campaign, arcade, versus CPU, practice and gallery. Rei and Vira are replaced once Arjuna and Bhima exist. The full plan (data model, sim mechanics, render kit, scenes, campaign, work order A1–A9) is in `docs/PLAN.md` "Phase 2" and `docs/SPEC.md` sections 1, 5 and 7 (the mythology rule was rewritten with the user's consent). Concept boards live outside the repo (`E:\Projects\0 GPT\gpt game test start\output\`) and are reference only: no image assets.
+
+- A1 (foundation) done: ASTRA title and main menu (`src/scenes/mainMenu.ts`, `listMenu.ts`), controls screen shown before the first fight (`controlsScreen.ts`), `SaveStore` (`src/engine/save.ts`, key `astra.save.v1`), hero profile types (`src/content/types.ts`). The old mode select is gone; `?mode=` deep links still work. Story, Arcade, Practice and Gallery appear disabled in the menu with the slice that adds them named.
+- Next: A2 sim mechanics (see PLAN). Then A3 render kit, A4 Arjuna and Bhima.
+
+## Status (phase 1, kept for reference)
+
+Last updated: 2026-11-15 (A1)
 
 - Phase: 8 of 14 tasks done. `npm run dev` opens a mode select: two players, or solo against the AI (easy, normal, hard) with keyboard plus mouse for P1. 273 tests pass.
 - Accepted: 1 scaffold, 2 engine, 3 combat sim, 4 rig and rendering, 5 lore, 6 fight scene and HUD, 7 fighters Rei and Vira, 9 AI opponent (done 2026-11-14 on the second PC, directly in the main session because the savvy-flow skill only loads in a new session there).
