@@ -13,6 +13,11 @@ export default tseslint.config(
     languageOptions: { globals: { ...globals.browser } },
   },
   {
+    // Node scripts (setup and tooling), not browser code.
+    files: ['claude-setup/**', 'scripts/**'],
+    languageOptions: { globals: { ...globals.node } },
+  },
+  {
     // Sim purity: no imports from outside src/sim, no randomness, time or DOM.
     files: ['src/sim/**/*.ts'],
     rules: {

@@ -35,9 +35,12 @@ Browser screenshots time out and `requestAnimationFrame` does not fire while the
 
 The savvy-flow progress bar and agents panel are loaded by hand on the original PC: github.com/johnnyvizz/claude-kit is cloned at `C:\Users\<you>\claude-kit` and `C:\Users\<you>\.claude\settings.json` has `"env": { "CLAUDE_CODE_PLUGIN_DIRS": "~/claude-kit/plugins/savvy-progress" }`. Confirmed working on 2026-11-14: the tools `mcp__savvy-progress__progress` (orchestrator; may need loading with ToolSearch) and `mcp__savvy-progress__step` (workers) are available, and the flow was reported as 7 of 14 tasks. In a new session, report the plan again with `progress` (task titles must equal the Agent `description` used when delegating; the titles are the Task column of `docs/PLAN.md`). Do not install the `savvy-flow` plugin on top of the hand-installed skill and agents.
 
-## Moving to another computer
+## Repository and other computers
 
-The user wants to continue on a different PC. `docs/SETUP-NEW-PC.md` has the steps. A transfer zip was made on the original PC's Desktop (`mythic-neon-transfer.zip`: the project with git history, the savvy agents and skill, and the setup notes). The project has no GitHub remote; pushing it anywhere needs the user's explicit go-ahead.
+- GitHub: https://github.com/Scavy619/fight-test-game (PUBLIC, branch `main`). The user asked for the project to be pushed there on 2026-11-14. Push after each accepted task from now on only if the user confirms that standing wish; so far they asked for this one push.
+- The user wants the same interface on another device they call `balajidesk`. It is not reachable from the original PC's session (not a saved SSH connection), so it is set up from the repo: clone, `npm install`, `node claude-setup/install.mjs`, new session. Steps in `docs/SETUP-NEW-PC.md`.
+- A transfer zip (project plus setup notes) is attached to the GitHub release `transfer-2026-11-14`.
+- Before the first push, the Windows user name was replaced by `<you>` in this file across the whole history (commit hashes changed on 2026-11-14). Keep personal details (user names, email, local paths with a user name) out of committed files: the repo is public.
 
 ## Decisions made (do not reopen without the user)
 

@@ -8,11 +8,13 @@ The project is self-contained in this folder (git history included). What is not
 - Git.
 - Claude Code (desktop app or CLI), signed in.
 
-## 2. Put the project in place
+## 2. Get the project
 
-Copy the project folder anywhere, for example `Desktop\mythic-neon`. Then, in that folder:
+It is on GitHub: https://github.com/Scavy619/fight-test-game (public).
 
 ```
+git clone https://github.com/Scavy619/fight-test-game.git
+cd fight-test-game
 npm install
 npm run test
 npm run dev
@@ -20,29 +22,19 @@ npm run dev
 
 Open http://localhost:5173. `npm run test` should report 260 passing tests (as of task 7).
 
-`node_modules` and `dist` are not part of the transfer; `npm install` recreates them.
+## 3. Get the same Claude Code interface (savvy-flow, progress bar, agents panel)
 
-## 3. Install the savvy-flow setup (optional but recommended)
+The work is run with the `/savvy-flow` skill, five worker agents and the `savvy-progress` mod. They live in the user's Claude config folder, not in the project. One command sets all of it up:
 
-The work is run with the `/savvy-flow` skill and five worker agents. They live in the user's Claude config folder, not in the project. Copy from the old PC (or from the `claude-setup` folder of the transfer zip) into the same places on the new PC:
+```
+node claude-setup/install.mjs
+```
 
-- `agents\savvy-light.md`, `savvy-medium.md`, `savvy-careful.md`, `savvy-heavy.md`, `savvy-fable.md` → `C:\Users\<you>\.claude\agents\`
-- `skills\savvy-flow\SKILL.md` → `C:\Users\<you>\.claude\skills\savvy-flow\`
+It clones https://github.com/johnnyvizz/claude-kit into your home folder, copies the skill and agents into `~/.claude`, and adds `"env": { "CLAUDE_CODE_PLUGIN_DIRS": "~/claude-kit/plugins/savvy-progress" }` to `~/.claude/settings.json` (existing files are backed up as `.bak`). Then start a new Claude Code session.
 
-Source of both: https://github.com/johnnyvizz/claude-kit (plugin `savvy-flow`). Installing that plugin from the marketplace is an alternative to copying the files: `/plugin marketplace add johnnyvizz/claude-kit`, then `/plugin install savvy-flow@claude-kit`. Do one or the other, not both.
+Notes: the mod uses an early-access Claude Code API (it was tested by its author on 2.1.286 and works on the original PC); if the bar does not appear, update Claude Code. Do not also install the `savvy-flow` plugin from the marketplace; that would duplicate the skill and agents. Without any of this the project can still be continued in a plain session by following `HANDOFF.md`.
 
-Without them the project can still be continued in a plain session by following `HANDOFF.md`; you just do not get the tiered workers.
-
-## 4. Progress bar and agents panel (optional)
-
-The `savvy-progress` mod draws the progress bar above the prompt and the agents panel (`/agents-info`). On the old PC it is loaded by hand and works:
-
-1. `git clone https://github.com/johnnyvizz/claude-kit.git` into your home folder (`C:\Users\<you>\claude-kit`).
-2. In `C:\Users\<you>\.claude\settings.json` add:
-   `"env": { "CLAUDE_CODE_PLUGIN_DIRS": "~/claude-kit/plugins/savvy-progress" }`
-3. Start a new Claude Code session.
-
-## 5. Resume
+## 4. Resume
 
 Open the project folder in Claude Code and run:
 
