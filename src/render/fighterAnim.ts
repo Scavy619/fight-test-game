@@ -1,5 +1,6 @@
 // Maps sim fighter state to an animation and frame, and drives a FighterView from it.
 import { GETUP_FRAMES } from '../sim/constants';
+import { moveFor } from '../sim/moves';
 import type { FighterDef, FighterState } from '../sim/types';
 import { animDuration, blendPose, copyPose, createPose, samplePose } from './anim';
 import type { FighterView } from './fighterView';
@@ -55,7 +56,7 @@ export function pickAnimation(f: FighterState, def: FighterDef): AnimPick {
       return { id: 'crouch', frame: sf };
     case 'attack':
       if (f.move === null) return { id: 'idle', frame: sf };
-      return { id: def.moves[f.move].anim, frame: f.moveFrame };
+      return { id: moveFor(def, f, f.move).anim, frame: f.moveFrame };
     case 'charge':
       return { id: 'charge', frame: sf };
     case 'block':
@@ -89,7 +90,7 @@ export function resolveAnimation(anims: AnimationSet, id: string): { id: string;
 /** True while the fighter's current move is on its active frames (weapon trail). */
 export function inActiveFrames(f: FighterState, def: FighterDef): boolean {
   if (f.state !== 'attack' || f.move === null) return false;
-  const m = def.moves[f.move];
+  const m = moveFor(def, f, f.move);
   return f.moveFrame > m.startup && f.moveFrame <= m.startup + m.active;
 }
 

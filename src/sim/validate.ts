@@ -37,6 +37,19 @@ function checkMove(slot: string, m: MoveDef, problems: string[]): void {
     for (const s of m.cancels.into) if (!MOVE_SLOTS.includes(s)) p(`cancels into unknown slot ${s}`);
   }
   for (const fx of m.fx ?? []) if (fx.frame < 1 || fx.frame > total) p(`fx ${fx.tag} outside the move`);
+  if (m.grants && (!isWhole(m.grants.frames, 1) || !m.grants.label)) p('grants needs frames >= 1 and a label');
+  if (m.piercesLateGuard !== undefined && !isWhole(m.piercesLateGuard, 1)) p('piercesLateGuard must be a whole number >= 1');
+  const z = m.zone;
+  if (z) {
+    if (z.frame < 1 || z.frame > total) p('zone frame outside the move');
+    if (!(z.w > 0) || !isWhole(z.frames, 1) || !z.label) p('zone needs a positive width, frames >= 1 and a label');
+    if (z.kind === 'strike') {
+      if (!(z.damage !== undefined && z.damage > 0)) p('strike zone needs damage');
+      if (z.strikeAt !== undefined && (z.strikeAt < 1 || z.strikeAt > z.frames)) p('strike zone strikeAt outside 1..frames');
+    }
+    if (z.kind === 'slow' && z.slowFactor !== undefined && !(z.slowFactor > 0 && z.slowFactor < 1)) p('slow zone factor must be in (0, 1)');
+  }
+  if (m.projectile?.behavior === 'returning' && (m.projectile.hits ?? 1) < 1) p('returning projectile needs hits');
 }
 
 /** Returns a list of problems (empty when the fighter is valid). */
@@ -60,6 +73,23 @@ export function validateFighterDef(def: FighterDef): string[] {
   const ult = def.moves.ultimate;
   if (ult && ult.startup <= SUPER_FREEZE_FRAMES) {
     problems.push(`ultimate: startup must exceed the ${SUPER_FREEZE_FRAMES}-frame super freeze`);
+  }
+  const stances = def.stances;
+  if (stances) {
+    if (stances.names.length !== stances.moves.length || stances.moves.length < 2) {
+      problems.push('stances: names and moves must match and number at least 2');
+    }
+    stances.moves.forEach((over, k) => {
+      for (const [slot, m] of Object.entries(over) as [string, MoveDef | undefined][]) {
+        if (m) checkMove(`stance ${k} ${slot}`, m, problems);
+      }
+    });
+  }
+  for (const slot of MOVE_SLOTS) {
+    const sw = def.moves[slot]?.switchStance;
+    if (sw === undefined) continue;
+    if (!stances) problems.push(`${slot}: switchStance without stances`);
+    else if (sw !== 'next' && (sw < 0 || sw >= stances.moves.length)) problems.push(`${slot}: switchStance out of range`);
   }
   return problems;
 }

@@ -1,6 +1,16 @@
 // Read-only helpers over move frame data.
 import { DEFAULT_CHIP } from './constants';
-import type { Element, FighterDef, FrameRange, Hitbox, MoveDef, MoveSlot, VelocityStep } from './types';
+import type { Element, FighterDef, FighterState, FrameRange, Hitbox, MoveDef, MoveSlot, VelocityStep } from './types';
+
+/** The move in a slot for the fighter's current stance (stance overrides, else the base move). */
+export function moveFor(def: FighterDef, f: Pick<FighterState, 'stance'>, slot: MoveSlot): MoveDef {
+  return def.stances?.moves[f.stance]?.[slot] ?? def.moves[slot];
+}
+
+/** Same by stance index (projectiles remember the stance they were spawned in). */
+export function moveInStance(def: FighterDef, stance: number, slot: MoveSlot): MoveDef {
+  return def.stances?.moves[stance]?.[slot] ?? def.moves[slot];
+}
 
 export function moveTotal(m: MoveDef): number {
   return m.startup + m.active + m.recovery;

@@ -3,7 +3,7 @@ import { PUSHBACK_FRICTION, STAGE_LEFT, STAGE_RIGHT } from './constants';
 import { type Ctx, other } from './context';
 import { isAirborne, landFighter } from './fighter';
 import { bodyRect, rectsOverlap } from './geometry';
-import { inRange } from './moves';
+import { inRange, moveFor } from './moves';
 import type { FighterDef, FighterState, PlayerIndex } from './types';
 
 export function clampToStage(x: number): number {
@@ -56,7 +56,7 @@ function passesThrough(f: FighterState, def: FighterDef): boolean {
   if (f.state === 'ko') return true;
   if (f.state === 'dodge') return f.dodgeForward;
   if (f.state === 'attack' && f.move !== null) {
-    const r = def.moves[f.move].passThrough;
+    const r = moveFor(def, f, f.move).passThrough;
     return r !== undefined && inRange(r, f.moveFrame);
   }
   return false;

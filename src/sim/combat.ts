@@ -7,7 +7,7 @@ import { type Ctx, PLAYERS, other } from './context';
 import { isAirborne, setState } from './fighter';
 import { bodyRect, liveWorldHitboxes, overlapCentre, rectsOverlap } from './geometry';
 import { backHeld } from './input';
-import { inRange, moveChip, moveElement } from './moves';
+import { inRange, moveChip, moveElement, moveFor, moveInStance } from './moves';
 import type {
   AttackLevel, Element, Facing, FighterDef, FighterState, Hitbox, MoveSlot, PlayerIndex, Strength, Vec2,
 } from './types';
@@ -24,6 +24,8 @@ export interface HitData {
   launches: boolean;
   throw: boolean;
   unblockable: boolean;
+  /** Not blocked by a guard younger than this many frames (0 = normal). */
+  piercesLateGuard: number;
   strength: Strength;
   element: Element;
   meterGain: number;
@@ -42,29 +44,38 @@ export interface PendingHit {
   group: number;
   /** Projectile id, or null for melee. */
   projectile: number | null;
+  /** Zone id for delayed strikes (neither melee nor projectile). */
+  zone?: number;
 }
 
-/** Hit data of a melee move; `box` overrides `launches` and `knockback` when it sets them. */
-export function meleeHitData(def: FighterDef, slot: MoveSlot, box?: Hitbox): HitData {
-  const m = def.moves[slot];
+/** A hit from the attacker's own body (the move's hit groups and `moveConnected` apply). */
+function isMelee(p: PendingHit): boolean {
+  return p.projectile === null && p.zone === undefined;
+}
+
+/** Hit data of a melee move in the attacker's stance; `box` overrides `launches` and `knockback` when it sets them. */
+export function meleeHitData(def: FighterDef, stance: number, slot: MoveSlot, box?: Hitbox): HitData {
+  const m = moveInStance(def, stance, slot);
   return {
     slot, damage: m.damage, level: m.level, hitstun: m.hitstun, blockstun: m.blockstun,
     knockback: box?.knockback ?? m.knockback, chip: moveChip(m),
     launches: box?.launches ?? m.launches ?? false, throw: m.throw ?? false, unblockable: m.unblockable ?? false,
+    piercesLateGuard: m.piercesLateGuard ?? 0,
     strength: m.strength, element: moveElement(def, m), meterGain: m.meterGain,
   };
 }
 
-/** Hit data of a projectile spawned by `slot` (which must define one). */
-export function projectileHitData(def: FighterDef, slot: MoveSlot): HitData {
-  const m = def.moves[slot];
+/** Hit data of a projectile spawned by `slot` in `stance` (which must define one). */
+export function projectileHitData(def: FighterDef, stance: number, slot: MoveSlot): HitData {
+  const m = moveInStance(def, stance, slot);
   const p = m.projectile;
   if (!p) throw new Error(`${def.id}.${slot} has no projectile`);
   const strength = p.strength ?? m.strength;
   return {
     slot, damage: p.damage, level: p.level, hitstun: p.hitstun, blockstun: p.blockstun,
     knockback: p.knockback, chip: p.chip ?? DEFAULT_CHIP[strength], launches: p.launches ?? false,
-    throw: false, unblockable: false, strength, element: p.element ?? moveElement(def, m),
+    throw: false, unblockable: false, piercesLateGuard: m.piercesLateGuard ?? 0,
+    strength, element: p.element ?? moveElement(def, m),
     meterGain: p.meterGain ?? m.meterGain,
   };
 }
@@ -100,14 +111,14 @@ export function collectMeleeHits(ctx: Ctx): PendingHit[] {
     if (a.state !== 'attack' || a.move === null) continue;
     const d = other(i);
     const target = ctx.s.fighters[d];
-    const isThrow = def.moves[a.move].throw ?? false;
+    const isThrow = moveFor(def, a, a.move).throw ?? false;
     if (isThrow ? !canBeThrown(target) : !canBeHit(target)) continue;
     const hurt = bodyRect(target, ctx.defs[d]);
     for (const box of liveWorldHitboxes(a, def)) {
       if (a.hitGroups.includes(box.group) || !rectsOverlap(box, hurt)) continue;
       const c = overlapCentre(box, hurt);
       pending.push({
-        attacker: i, defender: d, hit: meleeHitData(def, a.move, box.box), x: c.x, y: c.y,
+        attacker: i, defender: d, hit: meleeHitData(def, a.stance, a.move, box.box), x: c.x, y: c.y,
         pushDir: a.facing, group: box.group, projectile: null,
       });
       break;
@@ -146,7 +157,7 @@ function applyBlock(ctx: Ctx, p: PendingHit, crouching: boolean): void {
   addMeter(a, hit.meterGain * BLOCK_METER_FACTOR);
   addMeter(d, chip * METER_PER_DAMAGE_TAKEN);
   s.hitstop = Math.max(s.hitstop, Math.floor(HITSTOP[hit.strength] * BLOCK_HITSTOP_FACTOR));
-  if (p.projectile === null) {
+  if (isMelee(p)) {
     a.moveConnected = true;
     a.hitGroups.push(p.group);
   }
@@ -176,10 +187,10 @@ function applyHit(ctx: Ctx, p: PendingHit, wasAirborne: boolean, wasCrouching: b
   addMeter(d, (before - d.health) * METER_PER_DAMAGE_TAKEN);
 
   // Super armour: the defender's move keeps going (unless the hit was a KO).
-  const armor = d.state === 'attack' && d.move !== null ? ctx.defs[p.defender].moves[d.move].armor : undefined;
+  const armor = d.state === 'attack' && d.move !== null ? moveFor(ctx.defs[p.defender], d, d.move).armor : undefined;
   if (armor && inRange(armor, d.moveFrame) && d.health > 0) {
     s.hitstop = Math.max(s.hitstop, HITSTOP[hit.strength]);
-    if (p.projectile === null) {
+    if (isMelee(p)) {
       a.moveConnected = true;
       a.hitGroups.push(p.group);
     }
@@ -219,7 +230,7 @@ function applyHit(ctx: Ctx, p: PendingHit, wasAirborne: boolean, wasCrouching: b
   }
 
   s.hitstop = Math.max(s.hitstop, HITSTOP[hit.strength]);
-  if (p.projectile === null) {
+  if (isMelee(p)) {
     a.moveConnected = true;
     a.hitGroups.push(p.group);
   }
@@ -231,6 +242,33 @@ function applyHit(ctx: Ctx, p: PendingHit, wasAirborne: boolean, wasCrouching: b
 }
 
 /**
+ * Shields granted by moves. Returns the hit to resolve (possibly halved), or null when the
+ * shield absorbed it. Throws ignore shields. A hit whose strength is in `breaksOn` breaks the
+ * shield and lands in full.
+ */
+function applyShield(ctx: Ctx, p: PendingHit): PendingHit | null {
+  const d = ctx.s.fighters[p.defender];
+  const a = ctx.s.fighters[p.attacker];
+  const sh = d.shield;
+  if (!sh || p.hit.throw) return p;
+  d.shield = null;
+  if (sh.breaksOn.includes(p.hit.strength)) {
+    ctx.events.push({ type: 'shieldBreak', fighter: p.defender, by: p.attacker, label: sh.label, x: p.x, y: p.y });
+    return p;
+  }
+  ctx.events.push({ type: 'shieldAbsorb', fighter: p.defender, by: p.attacker, kind: sh.kind, label: sh.label, x: p.x, y: p.y });
+  if (sh.kind === 'halve') return { ...p, hit: { ...p.hit, damage: Math.round(p.hit.damage / 2) } };
+  // absorb: the attacker still connected (chains work) and gains half meter; the defender is untouched.
+  addMeter(a, p.hit.meterGain * BLOCK_METER_FACTOR);
+  ctx.s.hitstop = Math.max(ctx.s.hitstop, Math.floor(HITSTOP[p.hit.strength] * BLOCK_HITSTOP_FACTOR));
+  if (isMelee(p)) {
+    a.moveConnected = true;
+    a.hitGroups.push(p.group);
+  }
+  return null;
+}
+
+/**
  * Applies all hits found this frame. Block decisions use each defender's
  * state from before any of this frame's hits, so trades are simultaneous.
  * Returns, per pending hit, whether it was blocked.
@@ -238,11 +276,16 @@ function applyHit(ctx: Ctx, p: PendingHit, wasAirborne: boolean, wasCrouching: b
 export function resolveHits(ctx: Ctx, pending: readonly PendingHit[]): boolean[] {
   const before = ctx.s.fighters.map((f) => ({
     canBlock: canBlock(f), crouching: f.crouching, airborne: isAirborne(f),
+    guardAge: f.state === 'block' ? f.stateFrame : Infinity,
   }));
-  return pending.map((p) => {
-    const snap = before[p.defender];
+  return pending.map((raw) => {
+    const snap = before[raw.defender];
     if (!snap) return false;
-    const blocked = !p.hit.throw && !p.hit.unblockable && snap.canBlock && levelBlocked(p.hit.level, snap.crouching);
+    const p = applyShield(ctx, raw);
+    if (!p) return false;
+    const lateGuard = p.hit.piercesLateGuard > 0 && snap.guardAge < p.hit.piercesLateGuard;
+    const blocked =
+      !p.hit.throw && !p.hit.unblockable && !lateGuard && snap.canBlock && levelBlocked(p.hit.level, snap.crouching);
     if (blocked) applyBlock(ctx, p, snap.crouching);
     else applyHit(ctx, p, snap.airborne, snap.crouching);
     return blocked;

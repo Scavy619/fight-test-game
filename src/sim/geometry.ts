@@ -8,8 +8,8 @@
 // right, so the box covers origin.x + x .. origin.x + x + w and
 // origin.y + y .. origin.y + y + h. Facing left mirrors it around the origin:
 // origin.x - x - w .. origin.x - x. `hitboxToWorld` does the conversion.
-import { liveHitboxes } from './moves';
-import type { Facing, FighterDef, FighterState, Hitbox, Projectile, Vec2 } from './types';
+import { liveHitboxes, moveFor } from './moves';
+import type { Facing, FighterDef, FighterState, Hitbox, Projectile, Vec2, Zone } from './types';
 
 export interface Rect { x: number; y: number; w: number; h: number }
 
@@ -43,7 +43,7 @@ export function bodyRect(f: FighterState, def: FighterDef): Rect {
 /** World rects of the fighter's hitboxes live this frame, with their hit group and source box. */
 export function liveWorldHitboxes(f: FighterState, def: FighterDef): (Rect & { group: number; box: Hitbox })[] {
   if (f.state !== 'attack' || f.move === null) return [];
-  return liveHitboxes(def.moves[f.move], f.moveFrame).map((b) => ({
+  return liveHitboxes(moveFor(def, f, f.move), f.moveFrame).map((b) => ({
     ...hitboxToWorld(b, f.x, f.y, f.facing),
     group: b.group ?? 0,
     box: b,
@@ -53,4 +53,9 @@ export function liveWorldHitboxes(f: FighterState, def: FighterDef): (Rect & { g
 /** Projectile positions are box centres. */
 export function projectileRect(p: Projectile): Rect {
   return { x: p.x - p.w / 2, y: p.y - p.h / 2, w: p.w, h: p.h };
+}
+
+/** Zones stand on the ground, centred on `x`. */
+export function zoneRect(z: Zone): Rect {
+  return { x: z.x - z.w / 2, y: 0, w: z.w, h: z.h };
 }

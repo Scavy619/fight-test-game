@@ -8,6 +8,7 @@ import {
   createFighterState, emitMoveFrameEvents, isGroundNeutral, resetFighterForRound, setState, updateFighter,
 } from './fighter';
 import { recordInput } from './input';
+import { resolveDecoys, tickZones } from './zones';
 import { applyPhysics, resolveBodyPush } from './physics';
 import {
   clashProjectiles, collectProjectileHits, consumeProjectileHits, moveProjectiles, spawnProjectiles,
@@ -30,6 +31,8 @@ export function createMatch(config: MatchConfig): Match {
     fighters: [createFighterState(d0, 0), createFighterState(d1, 1)],
     projectiles: [],
     nextProjectileId: 1,
+    zones: [],
+    nextZoneId: 1,
     hitstop: 0,
     superFreeze: null,
     winner: null,
@@ -96,11 +99,13 @@ function simulateFrame(ctx: Ctx, live: boolean): void {
   spawnProjectiles(ctx);
   if (live) {
     clashProjectiles(ctx);
+    resolveDecoys(ctx);
+    const strikes = tickZones(ctx);
     const melee = collectMeleeHits(ctx);
     const shots = collectProjectileHits(ctx);
-    const pending = [...melee, ...shots];
+    const pending = [...melee, ...shots, ...strikes];
     const blocked = resolveHits(ctx, pending);
-    consumeProjectileHits(ctx, shots, blocked.slice(melee.length));
+    consumeProjectileHits(ctx, shots, blocked.slice(melee.length, melee.length + shots.length));
   }
 
   // The attacker's combo ends when the defender leaves hitstun.
@@ -195,6 +200,7 @@ function finishRound(ctx: Ctx): void {
   s.round += 1;
   for (const i of PLAYERS) resetFighterForRound(s.fighters[i], defs[i], i);
   s.projectiles = [];
+  s.zones = [];
   s.timer = s.roundFrames;
   s.hitstop = 0;
   s.superFreeze = null;

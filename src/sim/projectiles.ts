@@ -1,23 +1,38 @@
 // Projectile spawning, motion, clashes and hits.
-import { PROJECTILE_REHIT_FRAMES, STAGE_WIDTH } from './constants';
+import { PROJECTILE_REHIT_FRAMES, STAGE_LEFT, STAGE_RIGHT, STAGE_WIDTH } from './constants';
 import { type Ctx, PLAYERS, other } from './context';
 import { canBeHit, type PendingHit, projectileHitData } from './combat';
 import { bodyRect, overlapCentre, projectileRect, rectsOverlap } from './geometry';
-import { moveElement } from './moves';
+import { moveElement, moveFor } from './moves';
 import type { Facing, Projectile } from './types';
 
-/** Moves existing projectiles and removes expired or off-stage ones. */
+export const RETURNING_RANGE = 320;
+
+/** Moves existing projectiles and removes expired, off-stage or returned ones. */
 export function moveProjectiles(ctx: Ctx): void {
   const { s } = ctx;
+  const done = new Set<number>();
   for (const p of s.projectiles) {
-    // Only 'linear' exists; other behaviours would branch here.
     p.age += 1;
     p.x += p.vx;
     p.y += p.vy;
     if (p.rehit > 0) p.rehit -= 1;
+    if (p.behavior === 'returning') {
+      const owner = s.fighters[p.owner];
+      const range = moveFor(ctx.defs[p.owner], { stance: p.stance }, p.slot).projectile?.range ?? RETURNING_RANGE;
+      if (!p.returning && (Math.abs(p.x - p.startX) >= range || p.x <= STAGE_LEFT || p.x >= STAGE_RIGHT)) {
+        p.returning = true;
+        p.vx = Math.sign(owner.x - p.x || -p.vx) * Math.abs(p.vx);
+        p.rehit = 0;
+      } else if (p.returning) {
+        // Home on the owner and vanish once it reaches them.
+        p.vx = Math.sign(owner.x - p.x || p.vx) * Math.abs(p.vx);
+        if (Math.abs(owner.x - p.x) <= Math.abs(p.vx) + 4) done.add(p.id);
+      }
+    }
   }
   s.projectiles = s.projectiles.filter(
-    (p) => p.age <= p.lifetime && p.x > -p.w && p.x < STAGE_WIDTH + p.w && p.y > -p.h,
+    (p) => !done.has(p.id) && p.age <= p.lifetime && p.x > -p.w && p.x < STAGE_WIDTH + p.w && p.y > -p.h,
   );
 }
 
@@ -28,7 +43,7 @@ export function spawnProjectiles(ctx: Ctx): void {
     const f = s.fighters[i];
     if (f.state !== 'attack' || f.move === null) continue;
     const def = ctx.defs[i];
-    const m = def.moves[f.move];
+    const m = moveFor(def, f, f.move);
     const pd = m.projectile;
     if (!pd || f.moveFrame !== pd.frame) continue;
     const slot = f.move;
@@ -52,6 +67,9 @@ export function spawnProjectiles(ctx: Ctx): void {
       strength: pd.strength ?? m.strength,
       behavior: pd.behavior ?? 'linear',
       anim: pd.anim ?? m.anim,
+      stance: f.stance,
+      startX: f.x + f.facing * pd.x,
+      returning: false,
     };
     s.nextProjectileId += 1;
     s.projectiles.push(p);
@@ -106,7 +124,7 @@ export function collectProjectileHits(ctx: Ctx): PendingHit[] {
     const c = overlapCentre(r, hurt);
     const pushDir: Facing = p.vx > 0 ? 1 : p.vx < 0 ? -1 : p.facing;
     pending.push({
-      attacker: p.owner, defender: d, hit: projectileHitData(ctx.defs[p.owner], p.slot),
+      attacker: p.owner, defender: d, hit: projectileHitData(ctx.defs[p.owner], p.stance, p.slot),
       x: c.x, y: c.y, pushDir, group: 0, projectile: p.id,
     });
   }

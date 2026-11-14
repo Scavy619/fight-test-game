@@ -33,7 +33,9 @@
 - `src/sim/fighter.ts` — fighter state machine: timers, input decisions, cancels, ultimate, landing.
 - `src/sim/physics.ts` — gravity, pushback with corner transfer, stage bounds, body push.
 - `src/sim/combat.ts` — hit collection, block or hit decision, throws, damage, meter, hitstop.
-- `src/sim/projectiles.ts` — projectile spawn, motion, clash, hits.
+- `src/sim/projectiles.ts` — projectile spawn, motion (`linear`, `returning`), clash, hits.
+- `src/sim/zones.ts` — floor zones: `spawnZones` (from a move's `zone`), `resolveDecoys`, `tickZones` (slow fields, delayed strikes, expiry).
+- `src/sim/mechanics.test.ts` — stances, shields, late-guard pierce, zones, returning projectiles, determinism with all of them.
 - `src/sim/geometry.ts` — rects, hitbox to world conversion (convention documented here), overlap tests.
 - `src/sim/moves.ts` — read-only helpers over move frame data.
 - `src/sim/input.ts` — edge detection and the 6-frame press buffer.

@@ -73,10 +73,10 @@ export interface Hitbox {
 export interface VelocityStep { from: number; to: number; vx: number; vy?: number }
 
 /**
- * Projectile motion behaviours. Only 'linear' exists now; later fighters may
- * add e.g. 'returning' or 'delayed' here (extension point).
+ * Projectile motion behaviours. 'linear' flies straight; 'returning' flies out `range` px,
+ * reverses, and disappears once it passes its owner (a thrown axe; hits once each way with `hits: 2`).
  */
-export type ProjectileBehavior = 'linear';
+export type ProjectileBehavior = 'linear' | 'returning';
 
 export interface ProjectileDef {
   /** Move frame on which the projectile spawns. */
@@ -108,9 +108,55 @@ export interface ProjectileDef {
   anim?: string;
   /** Default 'linear'. */
   behavior?: ProjectileBehavior;
+  /** 'returning': px travelled before turning back (default 320). */
+  range?: number;
 }
 
 export interface MoveFx { frame: number; tag: string }
+
+export type ZoneKind = 'slow' | 'strike' | 'decoy' | 'mark';
+
+/**
+ * A floor zone spawned by a move: a slow field, a telegraphed delayed strike (lane), a decoy
+ * that absorbs one hit, or a pure visual mark. `x` is relative to the caster (facing-mirrored)
+ * or 'opponent' for the opponent's position; `offsets` spawn several zones around it.
+ */
+export interface ZoneDef {
+  kind: ZoneKind;
+  /** Move frame on which the zone(s) appear. */
+  frame: number;
+  x: number | 'opponent';
+  offsets?: readonly number[];
+  w: number;
+  /** Height above ground the zone covers (default 200). */
+  h?: number;
+  /** Lifetime in frames. */
+  frames: number;
+  /** strike: zone age at which it hits (must be <= frames). */
+  strikeAt?: number;
+  damage?: number;
+  hitstun?: number;
+  knockback?: Vec2;
+  level?: AttackLevel;
+  strength?: Strength;
+  launches?: boolean;
+  /** slow: walk and back speed multiplier for opponents inside (default 0.5). */
+  slowFactor?: number;
+  /** Shown as text by the renderer (never colour alone), e.g. "ARROWS FALL" or "SNARE". */
+  label: string;
+}
+
+export type ShieldKind = 'absorb' | 'halve';
+
+/** A temporary guard granted by a move: absorbs or halves the next hit unless the hit's strength breaks it. */
+export interface ShieldGrant {
+  shield: ShieldKind;
+  frames: number;
+  /** Hit strengths that break the shield instead (default: special and ultimate). */
+  breaksOn?: readonly Strength[];
+  /** Shown as text over the fighter, e.g. "RADIANT ARMOR". */
+  label: string;
+}
 
 export interface MoveDef {
   /** Animation id used by the renderer; the sim only passes it on. */
@@ -141,6 +187,16 @@ export interface MoveDef {
   unblockable?: boolean;
   /** Move frames on which hits deal damage but do not interrupt the move (super armour). */
   armor?: FrameRange;
+  /** Grants a shield on the move's first frame. */
+  grants?: ShieldGrant;
+  /** Hits are not blocked by a guard raised fewer than this many frames ago. */
+  piercesLateGuard?: number;
+  /** Spawns zone(s) on `zone.frame`. */
+  zone?: ZoneDef;
+  /** Switches the fighter's stance on the move's first frame (index, or the next one). */
+  switchStance?: number | 'next';
+  /** Render hint: hide the weapon while this move's projectile is live (a thrown axe). */
+  hideWeapon?: boolean;
   /** Chip fraction of damage dealt on block (default from strength: specials and ultimates chip). */
   chip?: number;
   meterGain: number;
@@ -168,6 +224,11 @@ export interface FighterDef {
   element: Element;
   stats: FighterStats;
   moves: Readonly<Record<MoveSlot, MoveDef>>;
+  /**
+   * Optional stances: `moves[k]` overrides slots while `FighterState.stance === k`.
+   * Stance 0 is the default and usually has no overrides. Switched by a move's `switchStance`.
+   */
+  stances?: { names: readonly string[]; moves: readonly Partial<Record<MoveSlot, MoveDef>>[] };
 }
 
 /**
@@ -210,6 +271,12 @@ export interface FighterState {
   chainedFrom: MoveSlot | null;
   /** Consecutive steps heavy has been held (charging the power strike). */
   heavyHeld: number;
+  /** Active shield from a `grants` move, or null. */
+  shield: { kind: ShieldKind; framesLeft: number; breaksOn: Strength[]; label: string } | null;
+  /** Current stance index (0 = default). */
+  stance: number;
+  /** Frames left of a slow field's effect and its speed factor. */
+  slow: { frames: number; factor: number };
   /** Duration of the current hitstun or blockstun. */
   stunFrames: number;
   /** In an air knockdown arc: lands in knockdown. */
@@ -255,6 +322,36 @@ export interface Projectile {
   strength: Strength;
   behavior: ProjectileBehavior;
   anim: string;
+  /** Owner's stance when spawned (its ProjectileDef lives in that stance's move). */
+  stance: number;
+  /** 'returning': spawn x and whether it has turned back. */
+  startX: number;
+  returning: boolean;
+}
+
+/** A live zone (see ZoneDef). `x` is the centre, `y` the bottom (0 = ground). */
+export interface Zone {
+  id: number;
+  owner: PlayerIndex;
+  slot: MoveSlot;
+  kind: ZoneKind;
+  x: number;
+  w: number;
+  h: number;
+  age: number;
+  frames: number;
+  strikeAt: number | null;
+  /** strike: hit already delivered. */
+  struck: boolean;
+  damage: number;
+  hitstun: number;
+  knockback: Vec2;
+  level: AttackLevel;
+  strength: Strength;
+  launches: boolean;
+  slowFactor: number;
+  element: Element;
+  label: string;
 }
 
 export type MatchPhase = 'intro' | 'fight' | 'ko' | 'timeout' | 'outro' | 'matchEnd';
@@ -285,6 +382,8 @@ export interface MatchState {
   fighters: [FighterState, FighterState];
   projectiles: Projectile[];
   nextProjectileId: number;
+  zones: Zone[];
+  nextZoneId: number;
   /** Frames of hitstop left (whole sim frozen). */
   hitstop: number;
   superFreeze: SuperFreeze | null;
@@ -335,6 +434,15 @@ export type SimEvent =
   | ({ type: 'ko'; fighter: PlayerIndex; by: PlayerIndex; element: Element; strength: Strength } & Located)
   | ({ type: 'finisher'; fighter: PlayerIndex; target: PlayerIndex; element: Element } & Located)
   | ({ type: 'fx'; fighter: PlayerIndex; tag: string; slot: MoveSlot } & Located)
+  | ({ type: 'zoneSpawn'; fighter: PlayerIndex; id: number; kind: ZoneKind; slot: MoveSlot; label: string; w: number } & Located)
+  | ({ type: 'zoneStrike'; fighter: PlayerIndex; id: number; slot: MoveSlot; element: Element; strength: Strength } & Located)
+  | ({ type: 'zoneEnd'; fighter: PlayerIndex; id: number; kind: ZoneKind } & Located)
+  | ({ type: 'decoyBroken'; fighter: PlayerIndex; by: PlayerIndex; id: number } & Located)
+  | ({ type: 'shieldGain'; fighter: PlayerIndex; kind: ShieldKind; frames: number; label: string } & Located)
+  | ({ type: 'shieldAbsorb'; fighter: PlayerIndex; by: PlayerIndex; kind: ShieldKind; label: string } & Located)
+  | ({ type: 'shieldBreak'; fighter: PlayerIndex; by: PlayerIndex; label: string } & Located)
+  | ({ type: 'stanceChange'; fighter: PlayerIndex; stance: number; name: string } & Located)
+  | ({ type: 'slowed'; fighter: PlayerIndex; by: PlayerIndex; factor: number } & Located)
   | { type: 'roundIntro'; round: number }
   | { type: 'roundStart'; round: number }
   | { type: 'roundEnd'; round: number; winner: PlayerIndex | null; reason: RoundEndReason }

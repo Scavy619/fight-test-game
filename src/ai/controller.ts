@@ -5,7 +5,7 @@
 // seeded RNG, so a run is reproducible for a seed.
 import {
   EMPTY_INPUT, METER_MAX, STAGE_LEFT, STAGE_RIGHT,
-  canCancelInto, isActionable, isAirborne, lastHitboxFrame, moveReach,
+  canCancelInto, isActionable, isAirborne, lastHitboxFrame, moveFor, moveReach,
   type FighterDef, type FighterState, type InputFrame, type Match, type MoveDef, type MoveSlot,
   type PlayerIndex, type Projectile,
 } from '../sim';
@@ -200,7 +200,7 @@ export function createAi(difficulty: Difficulty | AiParams, seed: number): AiCon
 
     // 1. Combo: cancel a connected move into the next link.
     if (f.state === 'attack' && f.move !== null && f.moveConnected) {
-      const cancels = def.moves[f.move].cancels;
+      const cancels = moveFor(def, f, f.move).cancels;
       if (cancels && f.moveFrame <= cancels.until && !rng.chance(p.mistake * 0.5)) {
         const slot = pickCancel(cancels.into, f, def, reaches, o);
         if (slot && canCancelInto(f, def, slot)) {
@@ -225,6 +225,16 @@ export function createAi(difficulty: Difficulty | AiParams, seed: number): AiCon
       if (reaches(reach.airHeavy) && Math.abs(o.y - f.y) < 140 && rng.chance(p.aggression + 0.2)) startPress('airHeavy');
       else if (gap < 60 && rng.chance(0.5)) startPress('airLight');
       return applyPress();
+    }
+
+    // 3b. Standing in a telegraphed strike lane: step out (the better the blocker, the more reliably).
+    const lane = s.zones.find(
+      (z) => z.owner === oppIndex && z.kind === 'strike' && !z.struck && Math.abs(z.x - f.x) < z.w / 2 + def.stats.width / 2,
+    );
+    if (lane && rng.chance(Math.max(0.15, p.block))) {
+      const away: 1 | -1 = f.x >= lane.x ? 1 : -1;
+      setDir(cornered && away !== toward ? toward : away);
+      return out;
     }
 
     // 4. Defence against a seen attack or projectile.

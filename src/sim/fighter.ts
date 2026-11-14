@@ -8,12 +8,13 @@ import {
 import { type Ctx, other } from './context';
 import { backHeld, buffered, consume, createInputState, emptyBuffer, forwardHeld } from './input';
 import {
-  inRange, isAirSlot, isCrouchSlot, isLightSlot, isSpecialSlot, lastHitboxFrame, moveElement, moveReach, moveTotal,
-  velocityAt,
+  inRange, isAirSlot, isCrouchSlot, isLightSlot, isSpecialSlot, lastHitboxFrame, moveElement, moveFor, moveReach,
+  moveTotal, velocityAt,
 } from './moves';
 import type {
-  BufferedButton, FighterDef, FighterState, FighterStateName, InputFrame, MoveSlot, PlayerIndex,
+  BufferedButton, FighterDef, FighterState, FighterStateName, InputFrame, MoveSlot, PlayerIndex, Strength,
 } from './types';
+import { spawnZones } from './zones';
 
 export function createFighterState(def: FighterDef, index: PlayerIndex): FighterState {
   return {
@@ -21,6 +22,7 @@ export function createFighterState(def: FighterDef, index: PlayerIndex): Fighter
     facing: index === 0 ? 1 : -1,
     state: 'idle', stateFrame: 1, crouching: false,
     move: null, moveFrame: 0, moveConnected: false, hitGroups: [], chainedFrom: null, heavyHeld: 0,
+    shield: null, stance: 0, slow: { frames: 0, factor: 1 },
     stunFrames: 0, knockdownOnLand: false,
     pushback: 0, pushbackTransfers: false,
     jumpDir: 0, airAttackUsed: false,
@@ -74,7 +76,7 @@ function setNeutral(f: FighterState, state: FighterStateName, crouching: boolean
 export function startMove(ctx: Ctx, i: PlayerIndex, slot: MoveSlot): void {
   const f = ctx.s.fighters[i];
   const def = ctx.defs[i];
-  const m = def.moves[slot];
+  const m = moveFor(def, f, slot);
   f.chainedFrom = f.state === 'attack' ? f.move : null;
   setState(f, 'attack');
   f.move = slot;
@@ -87,13 +89,28 @@ export function startMove(ctx: Ctx, i: PlayerIndex, slot: MoveSlot): void {
     type: 'moveStart', fighter: i, slot, anim: m.anim, x: f.x, y: f.y,
     element: moveElement(def, m), strength: m.strength,
   });
+  if (m.switchStance !== undefined && def.stances) {
+    const n = def.stances.moves.length;
+    const next = m.switchStance === 'next' ? (f.stance + 1) % n : Math.min(n - 1, Math.max(0, m.switchStance));
+    if (next !== f.stance) {
+      f.stance = next;
+      ctx.events.push({ type: 'stanceChange', fighter: i, stance: next, name: def.stances.names[next] ?? String(next), x: f.x, y: f.y });
+    }
+  }
+  if (m.grants) {
+    const g = m.grants;
+    f.shield = { kind: g.shield, framesLeft: g.frames, breaksOn: [...(g.breaksOn ?? DEFAULT_SHIELD_BREAKERS)], label: g.label };
+    ctx.events.push({ type: 'shieldGain', fighter: i, kind: g.shield, frames: g.frames, label: g.label, x: f.x, y: f.y });
+  }
 }
+
+const DEFAULT_SHIELD_BREAKERS: readonly Strength[] = ['special', 'ultimate'];
 
 export function canCancelInto(f: FighterState, def: FighterDef, slot: MoveSlot): boolean {
   if (f.state !== 'attack' || f.move === null || !f.moveConnected) return false;
   // Lights chain into one more light, not a third (light -> light -> heavy is the longest light run).
   if (isLightSlot(slot) && isLightSlot(f.move) && f.chainedFrom !== null && isLightSlot(f.chainedFrom)) return false;
-  const cancels = def.moves[f.move].cancels;
+  const cancels = moveFor(def, f, f.move).cancels;
   return cancels !== undefined && cancels.into.includes(slot) && f.moveFrame <= cancels.until;
 }
 
@@ -106,7 +123,7 @@ export function underAttack(ctx: Ctx, i: PlayerIndex): boolean {
   const j = other(i);
   const o = ctx.s.fighters[j];
   if (o.state === 'attack' && o.move !== null) {
-    const m = ctx.defs[j].moves[o.move];
+    const m = moveFor(ctx.defs[j], o, o.move);
     if (!m.throw && o.moveFrame <= lastHitboxFrame(m)) {
       const dist = Math.abs(o.x - f.x);
       if (dist <= moveReach(m) + ctx.defs[i].stats.width / 2 + GUARD_PROXIMITY) return true;
@@ -191,12 +208,13 @@ function actGround(ctx: Ctx, i: PlayerIndex, held: InputFrame): void {
   if (held.block || (backHeld(f, held) && underAttack(ctx, i))) return setNeutral(f, 'block', held.down);
   if (held.up) return setState(f, 'prejump');
   if (held.down) return setNeutral(f, 'crouch', true);
+  const slow = f.slow.frames > 0 ? f.slow.factor : 1;
   if (forwardHeld(f, held)) {
     setNeutral(f, 'walk', false);
-    f.vx = f.facing * def.stats.walkSpeed;
+    f.vx = f.facing * def.stats.walkSpeed * slow;
   } else if (backHeld(f, held)) {
     setNeutral(f, 'walk', false);
-    f.vx = -f.facing * def.stats.backSpeed;
+    f.vx = -f.facing * def.stats.backSpeed * slow;
   } else {
     setNeutral(f, 'idle', false);
   }
@@ -256,7 +274,7 @@ function advanceTimedState(ctx: Ctx, i: PlayerIndex, held: InputFrame): void {
       if (f.stateFrame > PREJUMP_FRAMES) takeoff(ctx, i, held);
       break;
     case 'attack': {
-      if (f.move === null || f.moveFrame <= moveTotal(ctx.defs[i].moves[f.move])) break;
+      if (f.move === null || f.moveFrame <= moveTotal(moveFor(ctx.defs[i], f, f.move))) break;
       if (isAirborne(f)) {
         setState(f, 'air');
         f.airAttackUsed = true;
@@ -298,7 +316,7 @@ function applyStateVelocity(ctx: Ctx, i: PlayerIndex): void {
   const airborne = isAirborne(f);
   switch (f.state) {
     case 'attack': {
-      const step = f.move === null ? undefined : velocityAt(ctx.defs[i].moves[f.move], f.moveFrame);
+      const step = f.move === null ? undefined : velocityAt(moveFor(ctx.defs[i], f, f.move), f.moveFrame);
       if (step) {
         f.vx = step.vx * f.facing;
         if (step.vy !== undefined) f.vy = step.vy;
@@ -327,12 +345,13 @@ export function emitMoveFrameEvents(ctx: Ctx, i: PlayerIndex): void {
   const f = ctx.s.fighters[i];
   if (f.state !== 'attack' || f.move === null) return;
   const def = ctx.defs[i];
-  const m = def.moves[f.move];
+  const m = moveFor(def, f, f.move);
   for (const fx of m.fx ?? []) {
     if (fx.frame === f.moveFrame) {
       ctx.events.push({ type: 'fx', fighter: i, tag: fx.tag, slot: f.move, x: f.x, y: f.y });
     }
   }
+  spawnZones(ctx, i, f, f.move, m);
   if (m.hitboxes.length > 0 && !f.moveConnected && f.moveFrame === lastHitboxFrame(m) + 1) {
     ctx.events.push({
       type: 'whiff', fighter: i, slot: f.move, x: f.x, y: f.y,
@@ -351,7 +370,7 @@ function computeInvulnerable(f: FighterState, def: FighterDef): boolean {
     case 'win':
       return true;
     case 'attack': {
-      const inv = f.move === null ? undefined : def.moves[f.move].invulnerable;
+      const inv = f.move === null ? undefined : moveFor(def, f, f.move).invulnerable;
       return inv !== undefined && inRange(inv, f.moveFrame);
     }
     default:
@@ -370,6 +389,8 @@ export function updateFighter(ctx: Ctx, i: PlayerIndex, held: InputFrame): void 
   const opp = ctx.s.fighters[other(i)];
   if (f.dodgeCooldown > 0) f.dodgeCooldown -= 1;
   f.heavyHeld = held.heavy ? f.heavyHeld + 1 : 0;
+  if (f.shield && --f.shield.framesLeft <= 0) f.shield = null;
+  if (f.slow.frames > 0) f.slow.frames -= 1;
   f.stateFrame += 1;
   if (f.state === 'attack') f.moveFrame += 1;
 
