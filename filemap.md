@@ -51,6 +51,13 @@
 - `src/render/sampleLooks.ts` — sample `FighterLook`s for the four fighters (content tasks may move them into `src/content/fighters/`).
 - `src/render/anims/base.ts` — `baseAnims`: shared animations for every state and the generic move slots.
 - `gallery.html`, `src/gallery.ts` — dev-only rig gallery at `/gallery.html` (`?anim=&frame=&facing=-1&zoom=&focus=&drift=1`).
+- `src/render/fighterAnim.ts` — `pickAnimation` (sim state to animation id and frame) and `FighterAnimator` (blending, trail on active frames).
+- `src/render/hud.ts` — HUD state (damage ghost, combo pop) and drawing: health, names, pips, timer, meter, combo, announcer.
+- `src/render/stage.ts` — placeholder arena (`drawStage`, `GROUND_Y`); real arenas replace it in task 11.
+- `src/render/sparks.ts` — placeholder hit and block sparks; task 8 replaces them with particles.
+- `src/content/types.ts` — `FighterEntry { def, look, anims }`.
+- `src/scenes/fight.ts` — the fight scene: runs the sim, animators, HUD, shake, flash; `FightConfig` takes controllers (AI hook) and event listeners (effects, audio hook). Backquote toggles the hitbox debug overlay.
+- `src/scenes/pause.ts` — minimal pause overlay.
 - `src/sim/` — (task 3) pure combat simulation and its tests.
 - `src/engine/` — (task 2) loop, input, scene manager.
 - `src/render/` — (task 4) rig, animations, drawing, HUD, effects, arenas.

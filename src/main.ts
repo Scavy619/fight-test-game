@@ -4,11 +4,13 @@ import {
   SceneManager,
   createInputDebugScene,
   createLoop,
-  createPlaceholderTitleScene,
   setupCanvas,
   stepGame,
   type GameContext,
 } from './engine';
+import { REI_LOOK, VIRA_LOOK, baseAnims } from './render';
+import { createFightScene } from './scenes';
+import { testFighter } from './sim';
 
 const canvas = document.getElementById('game');
 if (!(canvas instanceof HTMLCanvasElement)) throw new Error('Missing #game canvas');
@@ -26,7 +28,16 @@ input.attach();
 const game: GameContext = { ctx, width, height, input, scenes, menu: new MenuInput() };
 
 const debug = new URLSearchParams(window.location.search).get('debug');
-scenes.set(debug === 'input' ? createInputDebugScene(game) : createPlaceholderTitleScene(game));
+scenes.set(
+  debug === 'input'
+    ? createInputDebugScene(game)
+    : createFightScene(game, {
+        fighters: [
+          { def: testFighter, look: REI_LOOK, anims: baseAnims },
+          { def: testFighter, look: VIRA_LOOK, anims: baseAnims },
+        ],
+      }),
+);
 
 createLoop({
   update: () => stepGame(game),

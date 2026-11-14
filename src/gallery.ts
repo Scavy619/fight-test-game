@@ -8,6 +8,7 @@ import { animDuration, createPose, samplePose } from './render/anim';
 import { BASE_ANIM_IDS, baseAnims } from './render/anims/base';
 import { createFighterView } from './render/fighterView';
 import { SAMPLE_LOOKS } from './render/sampleLooks';
+import { drawStage } from './render/stage';
 
 const GROUND_Y = 600;
 const STEP = 1000 / 60;
@@ -108,39 +109,6 @@ function step(): void {
   }
 }
 
-function drawStage(): void {
-  ctx.fillStyle = '#070A14';
-  ctx.fillRect(-width, -height, width * 3, height * 3);
-  // Faint horizon glow and floor grid.
-  const g = ctx.createLinearGradient(0, GROUND_Y - 220, 0, GROUND_Y);
-  g.addColorStop(0, 'rgba(61,169,255,0)');
-  g.addColorStop(1, 'rgba(61,169,255,0.08)');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, GROUND_Y - 220, width, 220);
-  ctx.fillStyle = '#0A0F1E';
-  ctx.fillRect(0, GROUND_Y, width, height - GROUND_Y);
-  ctx.strokeStyle = 'rgba(61,169,255,0.12)';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  for (let i = -12; i <= 12; i++) {
-    ctx.moveTo(width / 2 + i * 60, GROUND_Y);
-    ctx.lineTo(width / 2 + i * 160, height);
-  }
-  for (let y = GROUND_Y + 14, k = 1; y < height; k++, y += 8 * k) {
-    ctx.moveTo(0, y);
-    ctx.lineTo(width, y);
-  }
-  ctx.stroke();
-  ctx.strokeStyle = 'rgba(61,169,255,0.25)';
-  ctx.lineWidth = 6;
-  ctx.beginPath();
-  ctx.moveTo(0, GROUND_Y);
-  ctx.lineTo(width, GROUND_Y);
-  ctx.stroke();
-  ctx.strokeStyle = '#3DA9FF';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-}
 
 function drawHud(): void {
   const anim = baseAnims[animId()];
@@ -190,7 +158,7 @@ function tick(now: number): void {
     ctx.scale(zoom, zoom);
     ctx.translate(-fx, -(GROUND_Y - 100));
   }
-  drawStage();
+  drawStage(ctx, width, height, GROUND_Y, { lineColor: '#3DA9FF', lineAlpha: 1 });
   for (const f of fighters) f.view.draw(ctx, GROUND_Y);
   ctx.restore();
   drawHud();
