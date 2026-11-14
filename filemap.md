@@ -37,6 +37,20 @@
 - `src/sim/validate.ts` — `validateFighterDef(def)` for content tests; run it on every new fighter.
 - `src/sim/testFighter.ts` — complete generic 10-slot fighter used by tests and as a stand-in.
 - `src/sim/testHelpers.ts`, `src/sim/*.test.ts` — input scripting helpers and unit tests.
+- `src/render/index.ts` — public render API re-exports.
+- `src/render/types.ts` — `Bone`, `Pose`, `Keyframe`, `Animation`, `AnimationSet`, `FighterLook`, joint names; the angle convention is documented here.
+- `src/render/anim.ts` — `samplePose` and pose interpolation helpers.
+- `src/render/rig.ts` — skeleton dimensions, forward kinematics (`computeRig`), two-bone IK, weapon specs.
+- `src/render/pose.ts` — `pose()`, `key()`, `anim()` authoring helpers (degrees, IK targets); use these to write animations.
+- `src/render/fighterView.ts` — `createFighterView(look)`: draws body, head, ribbon, weapon, trail and ground glow.
+- `src/render/neon.ts` — palette and neon drawing helpers (capsules, rim strokes, energy lines).
+- `src/render/heads.ts` — the four head silhouettes and visor.
+- `src/render/weapons.ts` — katana, spear, staff, hammer.
+- `src/render/chain.ts` — follow chain for ribbons, braid and ponytail.
+- `src/render/color.ts` — colour helpers.
+- `src/render/sampleLooks.ts` — sample `FighterLook`s for the four fighters (content tasks may move them into `src/content/fighters/`).
+- `src/render/anims/base.ts` — `baseAnims`: shared animations for every state and the generic move slots.
+- `gallery.html`, `src/gallery.ts` — dev-only rig gallery at `/gallery.html` (`?anim=&frame=&facing=-1&zoom=&focus=&drift=1`).
 - `src/sim/` — (task 3) pure combat simulation and its tests.
 - `src/engine/` — (task 2) loop, input, scene manager.
 - `src/render/` — (task 4) rig, animations, drawing, HUD, effects, arenas.
