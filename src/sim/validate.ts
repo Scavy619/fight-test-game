@@ -22,6 +22,9 @@ function checkMove(slot: string, m: MoveDef, problems: string[]): void {
     const r = hitboxFrames(m, b);
     if (r.from < 1 || r.to > total || r.from > r.to) p(`hitbox frames ${r.from}..${r.to} outside 1..${total}`);
   }
+  if (m.armor && (m.armor.from < 1 || m.armor.to > total || m.armor.from > m.armor.to)) {
+    p(`armor frames ${m.armor.from}..${m.armor.to} outside 1..${total}`);
+  }
   for (const v of m.velocity ?? []) {
     if (v.from < 1 || v.to > total || v.from > v.to) p(`velocity frames ${v.from}..${v.to} outside 1..${total}`);
   }
@@ -51,6 +54,8 @@ export function validateFighterDef(def: FighterDef): string[] {
     }
     checkMove(slot, m, problems);
     if (isAirSlot(slot) && m.level !== 'overhead') problems.push(`${slot}: air attacks must be overhead`);
+    if (slot === 'throw' && !m.throw) problems.push('throw: must set throw: true');
+    if (slot === 'throw' && m.cancels) problems.push('throw: grabs do not cancel');
   }
   const ult = def.moves.ultimate;
   if (ult && ult.startup <= SUPER_FREEZE_FRAMES) {

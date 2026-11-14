@@ -1,13 +1,15 @@
 // Fighter state machine: timers, input decisions, move frames, velocities.
 import {
+  CHARGE_HOLD_FRAMES, CHARGE_MAX_FRAMES,
   DODGE_COOLDOWN_FRAMES, DODGE_FRAMES, DODGE_INVULNERABLE, DODGE_SPEED, DODGE_TRAVEL_FRAMES,
-  GETUP_FRAMES, KNOCKDOWN_FRAMES, LANDING_RECOVERY_FRAMES, METER_MAX, PREJUMP_FRAMES, START_X,
-  SUPER_FREEZE_FRAMES, ULTIMATE_EARLY_FRAMES,
+  GETUP_FRAMES, GRAB_CHORD_FRAMES, GUARD_PROXIMITY, KNOCKDOWN_FRAMES, LANDING_RECOVERY_FRAMES, METER_MAX,
+  PREJUMP_FRAMES, PROJECTILE_GUARD_RANGE, START_X, SUPER_FREEZE_FRAMES, ULTIMATE_EARLY_FRAMES,
 } from './constants';
 import { type Ctx, other } from './context';
 import { backHeld, buffered, consume, createInputState, emptyBuffer, forwardHeld } from './input';
 import {
-  inRange, isAirSlot, isCrouchSlot, isSpecialSlot, lastHitboxFrame, moveElement, moveTotal, velocityAt,
+  inRange, isAirSlot, isCrouchSlot, isLightSlot, isSpecialSlot, lastHitboxFrame, moveElement, moveReach, moveTotal,
+  velocityAt,
 } from './moves';
 import type {
   BufferedButton, FighterDef, FighterState, FighterStateName, InputFrame, MoveSlot, PlayerIndex,
@@ -18,7 +20,7 @@ export function createFighterState(def: FighterDef, index: PlayerIndex): Fighter
     x: START_X[index], y: 0, vx: 0, vy: 0,
     facing: index === 0 ? 1 : -1,
     state: 'idle', stateFrame: 1, crouching: false,
-    move: null, moveFrame: 0, moveConnected: false, hitGroups: [],
+    move: null, moveFrame: 0, moveConnected: false, hitGroups: [], chainedFrom: null, heavyHeld: 0,
     stunFrames: 0, knockdownOnLand: false,
     pushback: 0, pushbackTransfers: false,
     jumpDir: 0, airAttackUsed: false,
@@ -73,6 +75,7 @@ export function startMove(ctx: Ctx, i: PlayerIndex, slot: MoveSlot): void {
   const f = ctx.s.fighters[i];
   const def = ctx.defs[i];
   const m = def.moves[slot];
+  f.chainedFrom = f.state === 'attack' ? f.move : null;
   setState(f, 'attack');
   f.move = slot;
   f.moveFrame = 1;
@@ -88,8 +91,31 @@ export function startMove(ctx: Ctx, i: PlayerIndex, slot: MoveSlot): void {
 
 export function canCancelInto(f: FighterState, def: FighterDef, slot: MoveSlot): boolean {
   if (f.state !== 'attack' || f.move === null || !f.moveConnected) return false;
+  // Lights chain into one more light, not a third (light -> light -> heavy is the longest light run).
+  if (isLightSlot(slot) && isLightSlot(f.move) && f.chainedFrom !== null && isLightSlot(f.chainedFrom)) return false;
   const cancels = def.moves[f.move].cancels;
   return cancels !== undefined && cancels.into.includes(slot) && f.moveFrame <= cancels.until;
+}
+
+/**
+ * Holding back blocks (proximity guard): true while the opponent's current strike can still
+ * hit and is within reach, or a projectile is heading in.
+ */
+export function underAttack(ctx: Ctx, i: PlayerIndex): boolean {
+  const f = ctx.s.fighters[i];
+  const j = other(i);
+  const o = ctx.s.fighters[j];
+  if (o.state === 'attack' && o.move !== null) {
+    const m = ctx.defs[j].moves[o.move];
+    if (!m.throw && o.moveFrame <= lastHitboxFrame(m)) {
+      const dist = Math.abs(o.x - f.x);
+      if (dist <= moveReach(m) + ctx.defs[i].stats.width / 2 + GUARD_PROXIMITY) return true;
+    }
+  }
+  for (const p of ctx.s.projectiles) {
+    if (p.owner === j && (p.x < f.x) === (p.vx > 0) && Math.abs(p.x - f.x) <= PROJECTILE_GUARD_RANGE) return true;
+  }
+  return false;
 }
 
 function ultimateReady(ctx: Ctx, f: FighterState, def: FighterDef, held: InputFrame): boolean {
@@ -147,13 +173,22 @@ function actGround(ctx: Ctx, i: PlayerIndex, held: InputFrame): void {
     ctx.events.push({ type: 'dodge', fighter: i, forward: f.dodgeForward, x: f.x, y: f.y });
     return;
   }
+  // Grab: the grab button, or light and heavy pressed together (within the buffer window).
+  if (buffered(f, 'grab') || (buffered(f, 'light') && buffered(f, 'heavy'))) {
+    consume(f, 'grab');
+    consume(f, 'light');
+    consume(f, 'heavy');
+    return startMove(ctx, i, 'throw');
+  }
   for (const c of attackChoices(f, held, false)) {
     if (buffered(f, c.button)) {
       consume(f, c.button);
       return startMove(ctx, i, c.slot);
     }
   }
-  if (held.block) return setNeutral(f, 'block', held.down);
+  // Power button held, or heavy kept held: charge the power strike.
+  if (held.power || (held.heavy && f.heavyHeld >= CHARGE_HOLD_FRAMES)) return setState(f, 'charge');
+  if (held.block || (backHeld(f, held) && underAttack(ctx, i))) return setNeutral(f, 'block', held.down);
   if (held.up) return setState(f, 'prejump');
   if (held.down) return setNeutral(f, 'crouch', true);
   if (forwardHeld(f, held)) {
@@ -177,10 +212,23 @@ function actAir(ctx: Ctx, i: PlayerIndex, held: InputFrame): void {
   }
 }
 
+/** The button that turns a just-started normal into the grab (null for other moves). */
+function grabPartner(move: MoveSlot | null): BufferedButton | null {
+  if (move === 'light' || move === 'crouchLight') return 'heavy';
+  if (move === 'heavy' || move === 'crouchHeavy') return 'light';
+  return null;
+}
+
 function tryCancel(ctx: Ctx, i: PlayerIndex, held: InputFrame): void {
   const f = ctx.s.fighters[i];
   const def = ctx.defs[i];
   if (ultimateReady(ctx, f, def, held)) return startUltimate(ctx, i);
+  // Staggered grab chord: the other button within the first frames of a ground normal.
+  const partner = grabPartner(f.move);
+  if (partner && f.moveFrame <= GRAB_CHORD_FRAMES && !isAirborne(f) && buffered(f, partner)) {
+    consume(f, partner);
+    return startMove(ctx, i, 'throw');
+  }
   for (const c of attackChoices(f, held, isAirborne(f))) {
     if (buffered(f, c.button) && canCancelInto(f, def, c.slot)) {
       consume(f, c.button);
@@ -321,6 +369,7 @@ export function updateFighter(ctx: Ctx, i: PlayerIndex, held: InputFrame): void 
   const f = ctx.s.fighters[i];
   const opp = ctx.s.fighters[other(i)];
   if (f.dodgeCooldown > 0) f.dodgeCooldown -= 1;
+  f.heavyHeld = held.heavy ? f.heavyHeld + 1 : 0;
   f.stateFrame += 1;
   if (f.state === 'attack') f.moveFrame += 1;
 
@@ -329,6 +378,9 @@ export function updateFighter(ctx: Ctx, i: PlayerIndex, held: InputFrame): void 
   if (isGroundNeutral(f)) {
     faceOpponent(f, opp);
     actGround(ctx, i, held);
+  } else if (f.state === 'charge') {
+    faceOpponent(f, opp);
+    if (!(held.power || held.heavy) || f.stateFrame >= CHARGE_MAX_FRAMES) startMove(ctx, i, 'power');
   } else if (f.state === 'air' && !f.airAttackUsed) {
     actAir(ctx, i, held);
   } else if (f.state === 'attack') {

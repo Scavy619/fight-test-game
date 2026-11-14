@@ -24,6 +24,22 @@ export function lastHitboxFrame(m: MoveDef): number {
   return m.hitboxes.reduce((last, b) => Math.max(last, hitboxFrames(m, b).to), 0);
 }
 
+/** How far forward of the fighter origin a move's hitboxes get, including its own travel until the last hitbox frame. */
+export function moveReach(m: MoveDef): number {
+  const last = lastHitboxFrame(m);
+  let travel = 0;
+  for (const v of m.velocity ?? []) {
+    const to = Math.min(v.to, last);
+    if (to >= v.from) travel += v.vx * (to - v.from + 1);
+  }
+  const box = m.hitboxes.reduce((r, b) => Math.max(r, b.x + b.w), 0);
+  return Math.max(0, travel) + box;
+}
+
+export function isLightSlot(slot: MoveSlot): boolean {
+  return slot === 'light' || slot === 'crouchLight';
+}
+
 export function velocityAt(m: MoveDef, frame: number): VelocityStep | undefined {
   return m.velocity?.find((v) => inRange(v, frame));
 }

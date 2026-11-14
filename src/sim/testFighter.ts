@@ -18,7 +18,7 @@ const light: MoveDef = {
   damage: 40, level: 'mid', hitstun: 14, blockstun: 10, knockback: { x: 4, y: 0 },
   hitboxes: [{ x: 20, y: 105, w: 70, h: 30 }],
   strength: 'light', meterGain: 4,
-  cancels: { into: ['heavy', 'crouchHeavy', 'specialN', 'specialF', 'specialD'], until: 12 },
+  cancels: { into: ['light', 'crouchLight', 'heavy', 'crouchHeavy', 'specialN', 'specialF', 'specialD'], until: 15 },
 };
 
 const heavy: MoveDef = {
@@ -26,7 +26,7 @@ const heavy: MoveDef = {
   damage: 90, level: 'mid', hitstun: 22, blockstun: 16, knockback: { x: 6, y: 0 },
   hitboxes: [{ x: 25, y: 85, w: 95, h: 40 }],
   strength: 'heavy', meterGain: 8,
-  cancels: { into: ['specialN', 'specialF', 'specialD', 'ultimate'], until: 20 },
+  cancels: { into: ['specialN', 'specialF', 'specialD', 'ultimate'], until: 29 },
 };
 
 const crouchLight: MoveDef = {
@@ -34,7 +34,7 @@ const crouchLight: MoveDef = {
   damage: 35, level: 'low', hitstun: 14, blockstun: 10, knockback: { x: 3, y: 0 },
   hitboxes: [{ x: 20, y: 5, w: 75, h: 28 }],
   strength: 'light', meterGain: 4,
-  cancels: { into: ['heavy', 'crouchHeavy', 'specialN', 'specialF', 'specialD'], until: 12 },
+  cancels: { into: ['light', 'crouchLight', 'heavy', 'crouchHeavy', 'specialN', 'specialF', 'specialD'], until: 15 },
 };
 
 const crouchHeavy: MoveDef = {
@@ -42,7 +42,7 @@ const crouchHeavy: MoveDef = {
   damage: 80, level: 'low', hitstun: 24, blockstun: 14, knockback: { x: 2.5, y: 11 },
   hitboxes: [{ x: 15, y: 0, w: 115, h: 26 }],
   strength: 'heavy', meterGain: 8, launches: true,
-  cancels: { into: ['specialN', 'specialF', 'specialD', 'ultimate'], until: 16 },
+  cancels: { into: ['specialN', 'specialF', 'specialD', 'ultimate'], until: 33 },
 };
 
 const airLight: MoveDef = {
@@ -112,6 +112,23 @@ const ultimate: MoveDef = {
   fx: [{ frame: 2, tag: 'ultimateCharge' }, { frame: 51, tag: 'ultimateRush' }],
 };
 
+/** Grab: light + heavy together. Unblockable, close, whiffs on airborne or stunned opponents, tosses on hit. */
+const throwMove: MoveDef = {
+  anim: 'throw', startup: 5, active: 2, recovery: 20,
+  damage: 100, level: 'mid', hitstun: 20, blockstun: 0, knockback: { x: 5, y: 9 },
+  hitboxes: [{ x: 0, y: 30, w: 70, h: 120 }],
+  strength: 'heavy', meterGain: 8, launches: true, throw: true,
+};
+
+/** Power strike: hold heavy to charge, release. Armoured through the wind-up, unblockable, launches. */
+const power: MoveDef = {
+  anim: 'power', startup: 18, active: 3, recovery: 24,
+  damage: 150, level: 'mid', hitstun: 26, blockstun: 0, knockback: { x: 7, y: 11 },
+  hitboxes: [{ x: 25, y: 85, w: 95, h: 40 }],
+  strength: 'heavy', meterGain: 12, launches: true, unblockable: true,
+  armor: { from: 1, to: 18 },
+};
+
 export const testFighter: FighterDef = {
   id: 'test',
   name: 'Test Fighter',
@@ -127,5 +144,8 @@ export const testFighter: FighterDef = {
     height: 180,
     crouchHeight: 110,
   },
-  moves: { light, heavy, crouchLight, crouchHeavy, airLight, airHeavy, specialN, specialF, specialD, ultimate },
+  moves: {
+    light, heavy, crouchLight, crouchHeavy, airLight, airHeavy, specialN, specialF, specialD, ultimate,
+    throw: throwMove, power,
+  },
 };

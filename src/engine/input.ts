@@ -5,25 +5,27 @@ import { EMPTY_INPUT } from '../sim/types';
 export type KeyBindings = Record<keyof InputFrame, string[]>;
 
 export const INPUT_KEYS: readonly (keyof InputFrame)[] = [
-  'left', 'right', 'up', 'down', 'light', 'heavy', 'special', 'block', 'dodge',
+  'left', 'right', 'up', 'down', 'light', 'heavy', 'special', 'block', 'dodge', 'grab', 'power',
 ];
 
 export const P1_KEYS: KeyBindings = {
   left: ['KeyA'], right: ['KeyD'], up: ['KeyW'], down: ['KeyS'],
   light: ['KeyF'], heavy: ['KeyG'], special: ['KeyH'], block: ['KeyR'], dodge: ['KeyT'],
+  grab: ['KeyQ'], power: ['KeyE'],
 };
 
 export const P2_KEYS: KeyBindings = {
   left: ['ArrowLeft'], right: ['ArrowRight'], up: ['ArrowUp'], down: ['ArrowDown'],
   light: ['KeyK', 'Numpad1'], heavy: ['KeyL', 'Numpad2'], special: ['Semicolon', 'Numpad3'],
   block: ['KeyI', 'Numpad4'], dodge: ['KeyO', 'Numpad5'],
+  grab: ['KeyU', 'Numpad7'], power: ['KeyP', 'Numpad8'],
 };
 
 export const DEFAULT_BINDINGS: readonly [KeyBindings, KeyBindings] = [P1_KEYS, P2_KEYS];
 
 /** Standard-mapping gamepad button indices. */
 export const PAD_BUTTONS = {
-  A: 0, B: 1, X: 2, Y: 3, RB: 5, START: 9, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15,
+  A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, LT: 6, START: 9, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15,
 } as const;
 
 export const PAD_DEADZONE = 0.4;
@@ -68,6 +70,8 @@ export function gamepadToFrame(
     special: btn(PAD_BUTTONS.B),
     block: btn(PAD_BUTTONS.RB),
     dodge: btn(PAD_BUTTONS.A),
+    grab: btn(PAD_BUTTONS.LB),
+    power: btn(PAD_BUTTONS.LT),
   });
 }
 
@@ -105,6 +109,7 @@ export class InputManager {
   private readonly bound = new Set<string>();
   private lastFrames: [InputFrame, InputFrame] = [{ ...EMPTY_INPUT }, { ...EMPTY_INPUT }];
   private lastStart: [boolean, boolean] = [false, false];
+  private lastPadCount = 0;
   private attached = false;
 
   constructor(options: InputManagerOptions = {}) {
@@ -169,7 +174,13 @@ export class InputManager {
     ];
     this.lastFrames = frames;
     this.lastStart = [padStartPressed(pads[0]), padStartPressed(pads[1])];
+    this.lastPadCount = pads.filter((p) => p !== null && p !== undefined).length;
     return frames;
+  }
+
+  /** Gamepads seen on the most recent `poll()` (browsers list a pad only after a button press). */
+  get connectedPads(): number {
+    return this.lastPadCount;
   }
 
   /** Frames from the most recent `poll()`. */

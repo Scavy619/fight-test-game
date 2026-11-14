@@ -3,10 +3,10 @@ import { INPUT_BUFFER_FRAMES } from './constants';
 import type { BufferedButton, FighterState, InputFrame, InputState } from './types';
 import { EMPTY_INPUT } from './types';
 
-export const BUFFERED_BUTTONS: readonly BufferedButton[] = ['light', 'heavy', 'special', 'dodge'];
+export const BUFFERED_BUTTONS: readonly BufferedButton[] = ['light', 'heavy', 'special', 'dodge', 'grab'];
 
 export function emptyBuffer(): Record<BufferedButton, number> {
-  return { light: 0, heavy: 0, special: 0, dodge: 0 };
+  return { light: 0, heavy: 0, special: 0, dodge: 0, grab: 0 };
 }
 
 export function createInputState(): InputState {

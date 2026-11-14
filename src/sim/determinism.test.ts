@@ -27,6 +27,8 @@ function inputScript(seed: number, frames: number): InputFrame[] {
     const mash = dir.block ? 0 : 1;
     out.push({
       ...dir,
+      grab: false,
+      power: false,
       light: rnd() < 0.12 * mash,
       heavy: rnd() < 0.08 * mash,
       special: rnd() < 0.06 * mash,
@@ -99,9 +101,9 @@ describe('determinism', () => {
         maxCombo = Math.max(maxCombo, m.state.fighters[0].combo);
       }
     }
-    // Longest possible chain: light, heavy, special, then the 5-hit ultimate.
+    // Longest possible chain: light, light, heavy, special, then the 5-hit ultimate.
     expect(maxCombo).toBeGreaterThan(1);
-    expect(maxCombo).toBeLessThanOrEqual(8);
+    expect(maxCombo).toBeLessThanOrEqual(9);
   });
 
   it('does not mutate the fighter definitions', () => {

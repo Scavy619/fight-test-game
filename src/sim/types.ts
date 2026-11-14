@@ -5,23 +5,34 @@
 // Units: pixels, pixels per frame, frames at 60 Hz. Sim `y` is height above
 // ground (up is positive). Move data is authored facing right.
 
+/**
+ * `grab` is a dedicated grab button (light + heavy together also grabs); `power` is held to
+ * charge the power strike and released to throw it (holding heavy also charges).
+ */
 export interface InputFrame {
   left: boolean; right: boolean; up: boolean; down: boolean;
   light: boolean; heavy: boolean; special: boolean; block: boolean; dodge: boolean;
+  grab: boolean; power: boolean;
 }
 
 export const EMPTY_INPUT: InputFrame = {
   left: false, right: false, up: false, down: false,
   light: false, heavy: false, special: false, block: false, dodge: false,
+  grab: false, power: false,
 };
 
 export type PlayerIndex = 0 | 1;
 export type Facing = 1 | -1;
 export type Element = 'wind' | 'fire' | 'earth' | 'lightning' | 'shadow';
 
+/**
+ * `throw` is the grab: started by light + heavy together on the ground; its move must set `throw: true`.
+ * `power` is the charged strike: hold heavy through the `charge` state and release (or reach the
+ * maximum charge); normally armoured during its startup and unblockable.
+ */
 export const MOVE_SLOTS = [
   'light', 'heavy', 'crouchLight', 'crouchHeavy', 'airLight', 'airHeavy',
-  'specialN', 'specialF', 'specialD', 'ultimate',
+  'specialN', 'specialF', 'specialD', 'ultimate', 'throw', 'power',
 ] as const;
 export type MoveSlot = (typeof MOVE_SLOTS)[number];
 
@@ -126,6 +137,10 @@ export interface MoveDef {
   launches?: boolean;
   /** Unblockable; only connects with grounded, non-stunned, non-dodging, vulnerable opponents. */
   throw?: boolean;
+  /** Cannot be blocked (still whiffs on invulnerable or dodging opponents). */
+  unblockable?: boolean;
+  /** Move frames on which hits deal damage but do not interrupt the move (super armour). */
+  armor?: FrameRange;
   /** Chip fraction of damage dealt on block (default from strength: specials and ultimates chip). */
   chip?: number;
   meterGain: number;
@@ -160,10 +175,10 @@ export interface FighterDef {
  * renderers may show it with the crouch or prejump pose).
  */
 export type FighterStateName =
-  | 'idle' | 'walk' | 'crouch' | 'prejump' | 'air' | 'land' | 'attack'
+  | 'idle' | 'walk' | 'crouch' | 'prejump' | 'air' | 'land' | 'attack' | 'charge'
   | 'block' | 'blockstun' | 'hitstun' | 'knockdown' | 'getup' | 'dodge' | 'ko' | 'win';
 
-export type BufferedButton = 'light' | 'heavy' | 'special' | 'dodge';
+export type BufferedButton = 'light' | 'heavy' | 'special' | 'dodge' | 'grab';
 
 export interface InputState {
   /** Buttons held on the latest step (raw input, used for edge detection). */
@@ -191,6 +206,10 @@ export interface FighterState {
   moveConnected: boolean;
   /** Hitbox groups of the current move that already connected. */
   hitGroups: number[];
+  /** The move this one was cancelled from (null when started from neutral); limits self-chains. */
+  chainedFrom: MoveSlot | null;
+  /** Consecutive steps heavy has been held (charging the power strike). */
+  heavyHeld: number;
   /** Duration of the current hitstun or blockstun. */
   stunFrames: number;
   /** In an air knockdown arc: lands in knockdown. */
@@ -271,6 +290,8 @@ export interface MatchState {
   superFreeze: SuperFreeze | null;
   winner: PlayerIndex | null;
   lastRoundResult: RoundResult | null;
+  /** Multiplier on the damage (and chip) each side deals; 1 is normal. Used as a difficulty handicap. */
+  damageScale: [number, number];
 }
 
 export interface MatchConfig {
@@ -279,6 +300,8 @@ export interface MatchConfig {
   roundsToWin?: number;
   /** Default 60. */
   roundSeconds?: number;
+  /** Damage multiplier per side (default [1, 1]). */
+  damageScale?: [number, number];
 }
 
 export interface Match {
@@ -294,6 +317,8 @@ export type SimEvent =
       type: 'hit'; fighter: PlayerIndex; target: PlayerIndex; slot: MoveSlot;
       element: Element; strength: Strength; damage: number; combo: number;
       launches: boolean; projectile: number | null;
+      /** The defender's armour absorbed the hit (damage dealt, move not interrupted). */
+      armored: boolean;
     } & Located)
   | ({
       type: 'block'; fighter: PlayerIndex; target: PlayerIndex; slot: MoveSlot;

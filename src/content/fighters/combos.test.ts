@@ -27,6 +27,8 @@ function attackerScript(seed: number, frames: number): InputFrame[] {
     out.push({
       ...dir,
       block: false,
+      grab: false,
+      power: false,
       light: rnd() < 0.14,
       heavy: rnd() < 0.1,
       special: rnd() < 0.08,
@@ -86,7 +88,8 @@ describe('combo bounds', () => {
     // The script reaches real combos and ultimates.
     expect(b.maxCombo).toBeGreaterThan(2);
     expect(b.ultimateHits).toBeGreaterThan(0);
-    expect(b.maxCombo).toBeLessThanOrEqual(10);
+    // Light, light, heavy, then Rei's 8-hit ultimate is the longest route (11).
+    expect(b.maxCombo).toBeLessThanOrEqual(12);
     expect(b.maxDamageNoUltimate).toBeLessThanOrEqual(0.4 * defender.stats.health);
   });
 });

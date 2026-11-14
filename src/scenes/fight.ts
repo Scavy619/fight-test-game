@@ -6,6 +6,7 @@ import { baseAnims } from '../render/anims/base';
 import { rgba } from '../render/color';
 import { FighterAnimator } from '../render/fighterAnim';
 import { createFighterView } from '../render/fighterView';
+import { drawControlsStrip } from '../render/controlsHelp';
 import { HudState, drawHud, type HudInfo } from '../render/hud';
 import { MoveVisuals } from '../render/moveVisuals';
 import { Sparks } from '../render/sparks';
@@ -36,8 +37,16 @@ export interface FightConfig {
   listeners?: ((e: SimEvent, match: Match) => void)[];
   roundsToWin?: number;
   roundSeconds?: number;
-  /** Called when the player backs out after the match. */
+  /** Damage multiplier per side (difficulty handicap). */
+  damageScale?: [number, number];
+  /** Called when the player backs out after the match or from the pause overlay. */
   onExit?: () => void;
+  /** Solo play: the on-screen controls show the mouse for P1 and mark P2 as the computer. */
+  solo?: boolean;
+  /** Hide the controls strip above the meters (default shown). */
+  hideControls?: boolean;
+  /** Drawn last, over the HUD (the solo action bar). */
+  overlay?: (ctx: CanvasRenderingContext2D, match: Match) => void;
 }
 
 const PLAYERS = [0, 1] as const;
@@ -84,6 +93,7 @@ export function createFightScene(game: GameContext, config: FightConfig): Scene 
       fighters: [defs[0], defs[1]],
       roundsToWin: config.roundsToWin,
       roundSeconds: config.roundSeconds,
+      damageScale: config.damageScale,
     });
   }
 
@@ -131,10 +141,10 @@ export function createFightScene(game: GameContext, config: FightConfig): Scene 
     return c ? c(match, i) : game.input.frames[i];
   }
 
-  function updateMatchEnd(): boolean {
+  function updateMatchEnd(clicked: boolean): boolean {
     if (match.state.phase !== 'matchEnd') return false;
     const a = game.menu.actions;
-    if (a.confirm) {
+    if (a.confirm || clicked) {
       game.menu.latch();
       match = newMatch();
       resetTransients();
@@ -153,12 +163,14 @@ export function createFightScene(game: GameContext, config: FightConfig): Scene 
     const dk = game.input.isKeyDown('Backquote');
     if (dk && !debugKeyHeld) debugBoxes = !debugBoxes;
     debugKeyHeld = dk;
+    // Consumed every step so a click during play cannot linger until the match ends.
+    const clicked = game.mouse.takeClick();
 
     if (game.menu.actions.pause) {
-      game.scenes.push(createPauseScene(game));
+      game.scenes.push(createPauseScene(game, { onMenu: config.onExit, solo: config.solo ?? false }));
       return;
     }
-    if (updateMatchEnd()) return;
+    if (updateMatchEnd(clicked)) return;
 
     const s = match.state;
     // Which fighters the sim advances this step (mirrors `step`): none during hitstop,
@@ -328,6 +340,8 @@ export function createFightScene(game: GameContext, config: FightConfig): Scene 
     }
     drawHud(ctx, s, hud, info);
     if (debugBoxes) drawDebugText(ctx);
+    else if (!config.hideControls) drawControlsStrip(ctx, { solo: config.solo ?? false });
+    config.overlay?.(ctx, match);
   }
 
   return {

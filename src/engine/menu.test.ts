@@ -55,6 +55,17 @@ describe('MenuInput', () => {
     expect(new MenuInput().actions).toEqual(NO_MENU_ACTIONS);
   });
 
+  it('dodge (A on a pad) also confirms, for either player', () => {
+    const m = new MenuInput();
+    m.update(raw({ dodge: true }));
+    expect(m.actions.confirm).toBe(true);
+    expect(m.player(0).confirm).toBe(true);
+    m.update(raw({ dodge: true }));
+    expect(m.actions.confirm).toBe(false);
+    m.update(raw({}, { dodge: true }));
+    expect(m.player(1).confirm).toBe(true);
+  });
+
   it('confirm from either light or Enter, edge-triggered', () => {
     const m = new MenuInput();
     m.update(raw({ light: true }));

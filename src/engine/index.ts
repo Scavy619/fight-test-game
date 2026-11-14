@@ -1,6 +1,7 @@
 export * from './canvas';
 export * from './loop';
 export * from './input';
+export * from './mouse';
 export * from './menu';
 export * from './scenes';
 export * from './context';

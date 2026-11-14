@@ -32,6 +32,8 @@ export const VIRA_LOOK: FighterLook = {
 // ---- Moves ------------------------------------------------------------------------------
 
 const GROUND_CHAIN = ['heavy', 'crouchHeavy', 'specialN', 'specialF', 'specialD'] as const;
+/** Lights also chain into one more light (the sim allows a single light-to-light link). */
+const LIGHT_CHAIN = ['light', 'crouchLight', ...GROUND_CHAIN] as const;
 const SPECIALS = ['specialN', 'specialF', 'specialD'] as const;
 
 /** Long spear jab. */
@@ -40,7 +42,7 @@ const light: MoveDef = {
   damage: 42, level: 'mid', hitstun: 15, blockstun: 11, knockback: { x: 4.5, y: 0 },
   hitboxes: [{ x: 56, y: 98, w: 124, h: 38 }],
   strength: 'light', meterGain: 4,
-  cancels: { into: GROUND_CHAIN, until: 14 },
+  cancels: { into: LIGHT_CHAIN, until: 19 },
 };
 
 /** Wide spear sweep. */
@@ -49,7 +51,7 @@ const heavy: MoveDef = {
   damage: 95, level: 'mid', hitstun: 23, blockstun: 16, knockback: { x: 7, y: 0 },
   hitboxes: [{ x: 40, y: 60, w: 132, h: 110 }],
   strength: 'heavy', meterGain: 9,
-  cancels: { into: [...SPECIALS, 'ultimate'], until: 22 },
+  cancels: { into: [...SPECIALS, 'ultimate'], until: 33 },
 };
 
 /** Low spear poke. */
@@ -58,7 +60,7 @@ const crouchLight: MoveDef = {
   damage: 36, level: 'low', hitstun: 14, blockstun: 10, knockback: { x: 3.5, y: 0 },
   hitboxes: [{ x: 56, y: 30, w: 120, h: 42 }],
   strength: 'light', meterGain: 4,
-  cancels: { into: GROUND_CHAIN, until: 14 },
+  cancels: { into: LIGHT_CHAIN, until: 19 },
 };
 
 /** Shaft sweep at the legs; launches. */
@@ -67,7 +69,7 @@ const crouchHeavy: MoveDef = {
   damage: 85, level: 'low', hitstun: 22, blockstun: 14, knockback: { x: 2, y: 10 },
   hitboxes: [{ x: 20, y: 0, w: 144, h: 44 }],
   strength: 'heavy', meterGain: 8, launches: true,
-  cancels: { into: [...SPECIALS, 'ultimate'], until: 17 },
+  cancels: { into: [...SPECIALS, 'ultimate'], until: 37 },
 };
 
 /** Air thrust, angled down. */
@@ -161,6 +163,28 @@ const ultimate: MoveDef = {
   fx: [{ frame: 2, tag: 'sixCharge' }, { frame: 50, tag: 'plant' }, ...columnFx],
 };
 
+/** Grab (light + heavy): spear hooked behind the neck, a kalari sweep-and-throw. Unblockable, 78 px reach. */
+const throwMove: MoveDef = {
+  anim: 'vira.throw', startup: 6, active: 2, recovery: 22,
+  damage: 110, level: 'mid', hitstun: 22, blockstun: 0, knockback: { x: 6, y: 10 },
+  hitboxes: [{ x: 0, y: 30, w: 78, h: 130 }],
+  strength: 'heavy', meterGain: 8, launches: true, throw: true,
+  fx: [{ frame: 7, tag: 'grabFlash' }],
+};
+
+/**
+ * Power strike (hold heavy, release): the heavy's full sweep after a long armoured wind-up,
+ * unblockable, launches. 26 recovery frames on a whiff.
+ */
+const power: MoveDef = {
+  anim: 'vira.power', startup: 20, active: 4, recovery: 26,
+  damage: 160, level: 'mid', hitstun: 28, blockstun: 0, knockback: { x: 8, y: 12 },
+  hitboxes: [{ x: 40, y: 60, w: 132, h: 110 }],
+  strength: 'heavy', meterGain: 12, launches: true, unblockable: true,
+  armor: { from: 1, to: 20 },
+  fx: [{ frame: 2, tag: 'powerCharge' }, { frame: 21, tag: 'powerStrike' }],
+};
+
 export const VIRA_DEF: FighterDef = {
   id: 'vira',
   name: 'Vira',
@@ -176,7 +200,10 @@ export const VIRA_DEF: FighterDef = {
     height: 182,
     crouchHeight: 112,
   },
-  moves: { light, heavy, crouchLight, crouchHeavy, airLight, airHeavy, specialN, specialF, specialD, ultimate },
+  moves: {
+    light, heavy, crouchLight, crouchHeavy, airLight, airHeavy, specialN, specialF, specialD, ultimate,
+    throw: throwMove, power,
+  },
 };
 
 // ---- Visuals ----------------------------------------------------------------------------
@@ -190,6 +217,9 @@ const columnVisuals: Record<string, VisualSpec> = Object.fromEntries(
 
 export const VIRA_VISUALS: Readonly<Record<string, VisualSpec>> = {
   orbFlash: { kind: 'burst', x: 160, y: 122, radius: 40 },
+  grabFlash: { kind: 'burst', x: 56, y: 112, radius: 32, rays: 6, life: 10 },
+  powerCharge: { kind: 'burst', x: 0, y: 110, radius: 76, rays: 8, life: 18, color: VIRA_LOOK.secondary },
+  powerStrike: { kind: 'streak', x: -10, y: 115, length: 230, spread: 130, lines: 5 },
   lungeStreak: { kind: 'streak', x: -40, y: 112, length: 170, spread: 60, lines: 4 },
   flameRise: { kind: 'burst', x: 20, y: 10, radius: 50, color: VIRA_LOOK.secondary },
   sixCharge: { kind: 'burst', x: 0, y: 120, radius: 90, rays: 6, life: 20 },
@@ -214,26 +244,43 @@ const GUARD: PoseSpec = {
   weaponDir: 4,
 };
 
+// Idle: a slow breath with the spear tip circling (both hands drift together along the shaft).
 const idle = anim(
   true,
   key(0, GUARD),
-  key(32, { ...GUARD, y: 70.5, lean: -11, handF: [36, 102], handB: [0, 99], weaponDir: 7 }),
+  key(16, { ...GUARD, x: 1, y: 71.5, lean: -10.5, handF: [37, 103], handB: [1, 100.5], weaponDir: 6 }),
+  key(32, { ...GUARD, x: 2, y: 70.5, lean: -11, handF: [38, 102], handB: [2, 99], weaponDir: 8 }),
+  key(48, { ...GUARD, x: 1, y: 71.5, lean: -10.5, handF: [35, 105.5], handB: [-1, 103.5], weaponDir: 1 }),
   key(64, GUARD),
 );
 
 /**
  * Shuffle step: each planted foot slides back 36 px over 22 frames (~1.65 px per
  * animation frame = WALK_STRIDE_SPEED), so playback scaled by walk speed does not slide.
+ * `swing` (-1..1) pumps the spear forward with the step and rocks the lean a little.
  */
 function walkKeys(lean: number): Keyframe[] {
-  const step = (t: number, footF: [number, number], footB: [number, number], y: number): Keyframe =>
-    key(t, { ...GUARD, lean, y, footF, footB }, 'linear');
+  const step = (t: number, footF: [number, number], footB: [number, number], y: number, swing: number): Keyframe =>
+    key(
+      t,
+      {
+        ...GUARD,
+        lean: lean + swing * 2,
+        y,
+        footF,
+        footB,
+        handF: [36 + swing * 6, 104 + Math.abs(swing) * 2],
+        handB: [0 + swing * 6, 102 - swing * 1.5],
+        weaponDir: 4 + swing * 4,
+      },
+      'linear',
+    );
   return [
-    step(0, [14, 0], [-22, 0], 74),
-    step(11, [32, 9], [-40, 0], 76),
-    step(22, [50.3, 0], [-58.3, 0], 70),
-    step(33, [32, 0], [-40, 9], 76),
-    step(44, [14, 0], [-22, 0], 74),
+    step(0, [14, 0], [-22, 0], 74, 0),
+    step(11, [32, 9], [-40, 0], 76, 1),
+    step(22, [50.3, 0], [-58.3, 0], 70, 0),
+    step(33, [32, 0], [-40, 9], 76, -1),
+    step(44, [14, 0], [-22, 0], 74, 0),
   ];
 }
 
@@ -464,7 +511,60 @@ const ultimateAnim = anim(
   key(131, GUARD),
 );
 
+// throw 6/2/22: spear hooked high and forward (grab at 7), then swept back over the
+// shoulder as the hips turn, throwing the opponent.
+const VT_REACH: PoseSpec = {
+  y: 70,
+  lean: -22,
+  footF: [54, 0],
+  footB: [-36, 0],
+  handF: [66, 124],
+  handB: [34, 110],
+  weaponDir: 70,
+};
+const VT_TOSS: PoseSpec = {
+  y: 76,
+  lean: 12,
+  footF: [34, 0],
+  footB: [-48, 0],
+  handF: [16, 178],
+  handB: [-22, 158],
+  weaponDir: 125,
+  elbowF: 1,
+  elbowB: 1,
+};
+const throwAnim = anim(
+  false,
+  key(0, GUARD, 'out'),
+  key(4, { ...VT_REACH, lean: -12, handF: [48, 126], handB: [16, 112] }, 'in'),
+  key(7, VT_REACH, 'out'),
+  key(10, { ...VT_REACH, lean: -6, handF: [48, 160], handB: [14, 140] }, 'in'),
+  key(14, VT_TOSS),
+  key(20, { ...VT_TOSS, lean: 4, handF: [-6, 150], handB: [-36, 134] }),
+  key(30, GUARD),
+);
+
+// power 20/4/26: spear drawn high behind through the armoured wind-up, then the heavy's
+// sweep from high back to low front (strike at 21) with a longer follow-through.
+const VP_WINDUP: PoseSpec = {
+  y: 80, lean: 8, footF: [36, 0], footB: [-40, 0], handF: [16, 168], handB: [-34, 138], weaponDir: 130,
+};
+const powerAnim = anim(
+  false,
+  key(0, GUARD),
+  key(7, VP_WINDUP, 'out'),
+  key(15, { ...VP_WINDUP, y: 82, lean: 12, handF: [10, 172], handB: [-40, 140], weaponDir: 138 }),
+  key(18, { y: 78, lean: -4, footF: [44, 0], footB: [-40, 0], handF: [36, 160], handB: [-20, 140], weaponDir: 70 }, 'linear'),
+  key(21, H_STRIKE, 'linear'),
+  key(23, { ...H_STRIKE, handF: [62, 112], handB: [28, 118], weaponDir: -20 }, 'out'),
+  key(26, { ...H_STRIKE, handF: [56, 100], handB: [24, 112], weaponDir: -34 }),
+  key(34, { ...H_STRIKE, lean: -20, handF: [50, 94], handB: [18, 106], weaponDir: -40 }),
+  key(50, GUARD),
+);
+
 export const VIRA_ANIMS: AnimationSet = {
+  'vira.power': powerAnim,
+  'vira.throw': throwAnim,
   idle,
   walk,
   walkBack,

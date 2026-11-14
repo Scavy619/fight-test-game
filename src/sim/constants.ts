@@ -54,6 +54,26 @@ export const DODGE_SPEED = 6;
 /** Dodge moves on its first frames only, then settles. */
 export const DODGE_TRAVEL_FRAMES = 15;
 
+// Grab.
+/**
+ * A light or heavy that just started becomes the grab if the other button arrives while
+ * moveFrame <= this (so "together" tolerates a few frames of stagger, mouse buttons included).
+ * Kept below every light's startup so a heavy pressed on the hit frame still chains.
+ */
+export const GRAB_CHORD_FRAMES = 4;
+
+// Power strike.
+/** Steps heavy must stay held (after any heavy normal) before the fighter starts charging. */
+export const CHARGE_HOLD_FRAMES = 20;
+/** The charge releases by itself after this many steps in the `charge` state. */
+export const CHARGE_MAX_FRAMES = 70;
+
+// Guard: holding back blocks when the opponent attacks within range (classic proximity block).
+/** Px beyond the incoming move's reach within which holding back still blocks. */
+export const GUARD_PROXIMITY = 70;
+/** A projectile heading in within this many px makes holding back block. */
+export const PROJECTILE_GUARD_RANGE = 260;
+
 // Ultimate.
 /** Ultimate may also start within the first N frames of heavy or a special. */
 export const ULTIMATE_EARLY_FRAMES = 3;

@@ -13,7 +13,7 @@ Status values: `todo`, `in progress`, `accepted`. Update this file when a task i
 | 7 | Fighters Rei and Vira | Careful | 6 | accepted |
 | – | Checkpoint: user playtests the prototype | – | 7 | waiting for the user |
 | 8 | Effects and cinematics | Medium | 7 | todo |
-| 9 | AI opponent | Medium | 7 | todo |
+| 9 | AI opponent | Medium | 7 | done (plus mouse controls and an interim mode select) |
 | 10 | Menus and lore screen | Medium | 5, 7 | todo |
 | 11 | Arenas | Medium | 7 | todo |
 | 12 | Audio | Medium | 7 | todo |
@@ -41,6 +41,7 @@ Tasks 2–5 can run in parallel; so can 8–12.
 **8. Effects and cinematics.** `src/render/fx/`: pooled particle system; per-element hit sparks and trails (wind, fire, earth, lightning, shadow); projectile visuals; super-freeze treatment (arena dimmed, speed lines, caster name banner); finisher cinematic (slow motion, zoom, big text); KO slow-down. All driven by sim events, no sim changes.
 
 **9. AI opponent.** `src/ai/`: controller that reads sim state and returns an `InputFrame`. Behaviours: spacing, approach and retreat, poke at the right range, block or dodge on reaction, punish recovery, anti-air, combos through cancels, specials by range, ultimate when full. Difficulty sets reaction delay, mistake rate and aggression. Seeded RNG. Test: deterministic for a seed; hard beats easy in most of 20 simulated matches.
+  Done 2026-11-14 after the playtest, with two user requests folded in: solo play drives P1 with the mouse as well as the keyboard (`src/engine/mouse.ts`, SPEC 3.2), and an interim title/mode select (`src/scenes/modeSelect.ts`: two players, solo easy/normal/hard) that task 10 replaces with the real menus. `runAiMatch` in `src/ai/simulate.ts` is the headless runner task 14 builds on. The same session added, at the user's request, the shared grab (`throw` slot, light + heavy), the power strike (`power` slot, hold heavy), light → light chains with full-move cancel windows, and hold-back blocking; task 13's fighters need `throw` and `power` moves too.
 
 **10. Menus and lore screen.** Scenes: title, mode select (versus, practice with difficulty), character select (both players pick; in practice P1 picks both), arena select, results with rematch, pause overlay, controls help, lore screen reading `src/content/lore.ts` with Tradition and In this game labelled. Animated fighter previews on the select screen. Styled per SPEC 4.
 

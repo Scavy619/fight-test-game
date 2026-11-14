@@ -1,15 +1,18 @@
 import {
   InputManager,
+  LOGICAL_HEIGHT,
+  LOGICAL_WIDTH,
   MenuInput,
+  MouseInput,
   SceneManager,
+  canvasToLogical,
   createInputDebugScene,
   createLoop,
   setupCanvas,
   stepGame,
   type GameContext,
 } from './engine';
-import { FIGHTERS } from './content/fighters';
-import { createFightScene } from './scenes';
+import { MODE_OPTIONS, createModeSelectScene, startMode } from './scenes';
 
 const canvas = document.getElementById('game');
 if (!(canvas instanceof HTMLCanvasElement)) throw new Error('Missing #game canvas');
@@ -23,18 +26,17 @@ redraw = (): void => scenes.render(ctx, 0);
 
 const input = new InputManager();
 input.attach();
+const mouse = new MouseInput(canvasToLogical(canvas, LOGICAL_WIDTH, LOGICAL_HEIGHT));
+mouse.attach(canvas);
 
-const game: GameContext = { ctx, width, height, input, scenes, menu: new MenuInput() };
+const game: GameContext = { ctx, width, height, input, mouse, scenes, menu: new MenuInput() };
 
-const debug = new URLSearchParams(window.location.search).get('debug');
-scenes.set(
-  debug === 'input'
-    ? createInputDebugScene(game)
-    : createFightScene(game, {
-        // Rei (P1) versus Vira (P2) until the select screen exists.
-        fighters: [FIGHTERS.rei, FIGHTERS.vira],
-      }),
-);
+// `?debug=input` shows live inputs; `?mode=versus|easy|normal|hard` skips the mode select.
+const params = new URLSearchParams(window.location.search);
+const mode = MODE_OPTIONS.find((o) => o.mode === params.get('mode'))?.mode;
+if (params.get('debug') === 'input') scenes.set(createInputDebugScene(game));
+else if (mode) startMode(game, mode);
+else scenes.set(createModeSelectScene(game));
 
 createLoop({
   update: () => stepGame(game),

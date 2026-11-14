@@ -405,8 +405,9 @@ describe('cancels and combos', () => {
   });
 
   it('no cancel on whiff: the press waits in the buffer and expires', () => {
+    // Heavy on step 5 is past the grab chord window (GRAB_CHORD_FRAMES) and expires before the light ends.
     const m = fightMatch();
-    const ev = run(m, 30, (k) => inp({ light: k === 0, heavy: k === 2 }));
+    const ev = run(m, 30, (k) => inp({ light: k === 0, heavy: k === 5 }));
     expect(ofType(ev, 'moveStart').map((e) => e.slot)).toEqual(['light']);
   });
 
@@ -421,7 +422,8 @@ describe('cancels and combos', () => {
   });
 
   it('a move cannot cancel into a slot it does not list (light into light)', () => {
-    const m = fightMatch();
+    // Pin a light that lists only heavy (the test fighter's light now chains into a light too).
+    const m = fightMatch({ p0: withMove(testFighter, 'light', { cancels: { into: ['heavy'], until: 12 } }) });
     place(m, 500, 600);
     runUntilEvent(m, 'hit', 10, tap({ light: true }));
     run(m, 1, tap({ light: true }));
@@ -430,7 +432,8 @@ describe('cancels and combos', () => {
   });
 
   it('no cancel after the cancel window', () => {
-    const m = fightMatch();
+    // Pin a 12-frame window (content now runs windows to the end of the move).
+    const m = fightMatch({ p0: withMove(testFighter, 'light', { cancels: { into: ['heavy'], until: 12 } }) });
     place(m, 500, 600);
     runUntilEvent(m, 'hit', 10, tap({ light: true }));
     run(m, HITSTOP.light);

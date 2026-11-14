@@ -29,7 +29,7 @@ describe('fighter registry', () => {
 describe.each(entries)('%s', (id, entry) => {
   const { def, look, anims } = entry;
 
-  it('passes validateFighterDef and uses all 10 slots', () => {
+  it('passes validateFighterDef and uses every slot', () => {
     expect(validateFighterDef(def)).toEqual([]);
     expect(Object.keys(def.moves).sort()).toEqual([...MOVE_SLOTS].sort());
   });
@@ -74,7 +74,8 @@ describe.each(entries)('%s', (id, entry) => {
     let checked = 0;
     for (const slot of MOVE_SLOTS) {
       const m = def.moves[slot];
-      if (REMOTE_HITBOXES.has(m.anim)) continue;
+      // Grabs reach with the hands, not the weapon.
+      if (REMOTE_HITBOXES.has(m.anim) || m.throw) continue;
       const a = anims[m.anim];
       if (!a) continue;
       for (const b of m.hitboxes) {
@@ -145,6 +146,16 @@ describe.each(entries)('%s', (id, entry) => {
       }
       expect(spans, walkId).toBeGreaterThanOrEqual(2);
     }
+  });
+
+  it('the grab is a close unblockable toss that is punishable on a whiff', () => {
+    const t = def.moves.throw;
+    expect(t.throw).toBe(true);
+    expect(t.launches).toBe(true);
+    expect(t.cancels).toBeUndefined();
+    expect(Math.max(...t.hitboxes.map((b) => b.x + b.w))).toBeLessThanOrEqual(80);
+    expect(t.recovery).toBeGreaterThanOrEqual(18);
+    expect(t.damage).toBeGreaterThan(def.moves.heavy.damage);
   });
 
   it('ultimate startup covers the super freeze; specials and ultimate are telegraphed', () => {

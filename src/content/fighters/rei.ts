@@ -33,6 +33,8 @@ const SHADOW = '#B48CFF';
 // ---- Moves ------------------------------------------------------------------------------
 
 const GROUND_CHAIN = ['heavy', 'crouchHeavy', 'specialN', 'specialF', 'specialD'] as const;
+/** Lights also chain into one more light (the sim allows a single light-to-light link). */
+const LIGHT_CHAIN = ['light', 'crouchLight', ...GROUND_CHAIN] as const;
 const SPECIALS = ['specialN', 'specialF', 'specialD'] as const;
 
 const light: MoveDef = {
@@ -40,7 +42,7 @@ const light: MoveDef = {
   damage: 32, level: 'mid', hitstun: 13, blockstun: 10, knockback: { x: 3.5, y: 0 },
   hitboxes: [{ x: 24, y: 96, w: 118, h: 54 }],
   strength: 'light', meterGain: 4,
-  cancels: { into: GROUND_CHAIN, until: 12 },
+  cancels: { into: LIGHT_CHAIN, until: 14 },
 };
 
 /** Stepping diagonal cut. */
@@ -50,7 +52,7 @@ const heavy: MoveDef = {
   hitboxes: [{ x: 30, y: 24, w: 112, h: 146 }],
   velocity: [{ from: 4, to: 9, vx: 3.5 }],
   strength: 'heavy', meterGain: 8,
-  cancels: { into: [...SPECIALS, 'ultimate'], until: 20 },
+  cancels: { into: [...SPECIALS, 'ultimate'], until: 27 },
 };
 
 const crouchLight: MoveDef = {
@@ -58,7 +60,7 @@ const crouchLight: MoveDef = {
   damage: 28, level: 'low', hitstun: 13, blockstun: 10, knockback: { x: 3, y: 0 },
   hitboxes: [{ x: 36, y: 20, w: 110, h: 50 }],
   strength: 'light', meterGain: 4,
-  cancels: { into: GROUND_CHAIN, until: 12 },
+  cancels: { into: LIGHT_CHAIN, until: 14 },
 };
 
 /** Low sweeping slash that launches. */
@@ -67,7 +69,7 @@ const crouchHeavy: MoveDef = {
   damage: 70, level: 'low', hitstun: 22, blockstun: 13, knockback: { x: 2.5, y: 10.5 },
   hitboxes: [{ x: 28, y: 0, w: 124, h: 62 }],
   strength: 'heavy', meterGain: 8, launches: true,
-  cancels: { into: [...SPECIALS, 'ultimate'], until: 15 },
+  cancels: { into: [...SPECIALS, 'ultimate'], until: 32 },
 };
 
 const airLight: MoveDef = {
@@ -155,6 +157,29 @@ const ultimate: MoveDef = {
   ],
 };
 
+/** Grab (light + heavy): collar grip and a hip toss. Unblockable, 70 px reach, 20 recovery on a whiff. */
+const throwMove: MoveDef = {
+  anim: 'rei.throw', startup: 5, active: 2, recovery: 20,
+  damage: 90, level: 'mid', hitstun: 20, blockstun: 0, knockback: { x: 5, y: 9 },
+  hitboxes: [{ x: 0, y: 30, w: 70, h: 130 }],
+  strength: 'heavy', meterGain: 8, launches: true, throw: true,
+  fx: [{ frame: 6, tag: 'grabFlash' }],
+};
+
+/**
+ * Power strike (hold heavy, release): a slow stepping cut with the heavy's reach, armoured
+ * through its 18-frame wind-up, unblockable, launches. 24 recovery frames on a whiff.
+ */
+const power: MoveDef = {
+  anim: 'rei.power', startup: 18, active: 3, recovery: 24,
+  damage: 130, level: 'mid', hitstun: 26, blockstun: 0, knockback: { x: 7, y: 11 },
+  hitboxes: [{ x: 30, y: 24, w: 112, h: 146 }],
+  velocity: [{ from: 13, to: 18, vx: 3.5 }],
+  strength: 'heavy', meterGain: 12, launches: true, unblockable: true,
+  armor: { from: 1, to: 18 },
+  fx: [{ frame: 2, tag: 'powerCharge' }, { frame: 19, tag: 'powerStrike' }],
+};
+
 export const REI_DEF: FighterDef = {
   id: 'rei',
   name: 'Rei Kurogane',
@@ -170,13 +195,19 @@ export const REI_DEF: FighterDef = {
     height: 176,
     crouchHeight: 106,
   },
-  moves: { light, heavy, crouchLight, crouchHeavy, airLight, airHeavy, specialN, specialF, specialD, ultimate },
+  moves: {
+    light, heavy, crouchLight, crouchHeavy, airLight, airHeavy, specialN, specialF, specialD, ultimate,
+    throw: throwMove, power,
+  },
 };
 
 // ---- Visuals ----------------------------------------------------------------------------
 
 export const REI_VISUALS: Readonly<Record<string, VisualSpec>> = {
   shurikenFlash: { kind: 'burst', x: 56, y: 128, radius: 16, rays: 4, life: 8 },
+  grabFlash: { kind: 'burst', x: 50, y: 110, radius: 30, rays: 6, life: 10 },
+  powerCharge: { kind: 'burst', x: 0, y: 100, radius: 70, rays: 8, life: 18 },
+  powerStrike: { kind: 'streak', x: -20, y: 110, length: 200, spread: 120, lines: 5 },
   dashStreak: { kind: 'streak', x: -30, y: 110, length: 270, spread: 90 },
   vanish: { kind: 'burst', x: 0, y: 80, radius: 56, color: SHADOW },
   vanishTrail: { kind: 'streak', x: 0, y: 80, length: 320, spread: 100, lines: 6, color: SHADOW, life: 10 },
@@ -202,26 +233,44 @@ const GUARD: PoseSpec = {
   weaponDir: 28,
 };
 
+// Idle: a breath (root rises and falls), weight rocking onto the front foot, the blade tip
+// drifting up and down with the hands.
 const idle = anim(
   true,
   key(0, GUARD),
-  key(25, { ...GUARD, y: 78.5, lean: -14, handF: [35, 104], handB: [25, 99], weaponDir: 25 }),
+  key(12, { ...GUARD, x: 1, y: 79.5, lean: -13, handF: [35, 104.5], handB: [25, 100], weaponDir: 26 }),
+  key(25, { ...GUARD, x: 2, y: 78.5, lean: -14, handF: [36, 103], handB: [26, 98.5], weaponDir: 24 }),
+  key(38, { ...GUARD, x: 1, y: 79.5, lean: -13, handF: [33, 107], handB: [23, 102], weaponDir: 31 }),
   key(50, GUARD),
 );
 
 /**
  * Shuffle step: each planted foot slides back 33 px over 20 frames (1.65 px per
  * animation frame = WALK_STRIDE_SPEED), so playback scaled by walk speed does not slide.
+ * `swing` (-1..1) moves the hands against the legs and rocks the lean and blade a little.
  */
 function walkKeys(lean: number): Keyframe[] {
-  const step = (t: number, footF: [number, number], footB: [number, number], y: number): Keyframe =>
-    key(t, { ...GUARD, lean, y, footF, footB }, 'linear');
+  const step = (t: number, footF: [number, number], footB: [number, number], y: number, swing: number): Keyframe =>
+    key(
+      t,
+      {
+        ...GUARD,
+        lean: lean + swing * 2,
+        y,
+        footF,
+        footB,
+        handF: [34 + swing * 5, 106 + Math.abs(swing) * 3],
+        handB: [24 - swing * 4, 101 - swing * 2],
+        weaponDir: 28 + swing * 6,
+      },
+      'linear',
+    );
   return [
-    step(0, [7, 0], [-16, 0], 81),
-    step(10, [23.5, 10], [-32.5, 0], 83),
-    step(20, [40, 0], [-49, 0], 78),
-    step(30, [23.5, 0], [-32.5, 10], 83),
-    step(40, [7, 0], [-16, 0], 81),
+    step(0, [7, 0], [-16, 0], 81, 0),
+    step(10, [23.5, 10], [-32.5, 0], 83, 1),
+    step(20, [40, 0], [-49, 0], 78, 0),
+    step(30, [23.5, 0], [-32.5, 10], 83, -1),
+    step(40, [7, 0], [-16, 0], 81, 0),
   ];
 }
 
@@ -507,7 +556,60 @@ const ultimateAnim = anim(
   key(114, GUARD),
 );
 
+// throw 5/2/20: blade raised clear, both hands reach for the collar (grab at 6), then a
+// hip toss sweeping the hands up and back over the shoulder.
+const T_REACH: PoseSpec = {
+  y: 78,
+  lean: -24,
+  footF: [46, 0],
+  footB: [-30, 0],
+  handF: [62, 118],
+  handB: [54, 110],
+  weaponDir: 96,
+};
+const T_TOSS: PoseSpec = {
+  y: 82,
+  lean: 10,
+  footF: [30, 0],
+  footB: [-40, 0],
+  handF: [10, 176],
+  handB: [-6, 168],
+  weaponDir: 130,
+  elbowF: 1,
+  elbowB: 1,
+};
+const throwAnim = anim(
+  false,
+  key(0, GUARD, 'out'),
+  key(3, { ...T_REACH, lean: -14, handF: [44, 122], handB: [36, 114] }, 'in'),
+  key(6, T_REACH, 'out'),
+  key(8, { ...T_REACH, lean: -10, handF: [40, 150], handB: [30, 142] }, 'in'),
+  key(12, T_TOSS),
+  key(18, { ...T_TOSS, lean: 4, handF: [-10, 150], handB: [-20, 142] }),
+  key(27, GUARD),
+);
+
+// power 18/3/24: blade held high behind through the armoured wind-up, a step, then the heavy's
+// diagonal cut (strike at 19) with a longer follow-through.
+const P_WINDUP: PoseSpec = {
+  y: 90, lean: 8, head: 84, footF: [26, 0], footB: [-30, 0], handF: [6, 178], handB: [-4, 172], weaponDir: 140,
+};
+const powerAnim = anim(
+  false,
+  key(0, GUARD),
+  key(6, P_WINDUP, 'out'),
+  key(14, { ...P_WINDUP, y: 92, lean: 12, handF: [0, 180], handB: [-10, 174], weaponDir: 148 }),
+  key(17, { y: 86, lean: -6, footF: [36, 0], footB: [-30, 0], handF: [34, 176], handB: [24, 172], weaponDir: 78 }, 'linear'),
+  key(19, H_STRIKE, 'linear'),
+  key(20, { ...H_STRIKE, handF: [60, 110], handB: [48, 113], weaponDir: -44 }, 'out'),
+  key(23, { ...H_STRIKE, lean: -28, y: 72, handF: [52, 92], handB: [42, 96], weaponDir: -66 }),
+  key(32, { ...H_STRIKE, lean: -20, handF: [44, 92], handB: [34, 92], weaponDir: -50 }),
+  key(45, GUARD),
+);
+
 export const REI_ANIMS: AnimationSet = {
+  'rei.power': powerAnim,
+  'rei.throw': throwAnim,
   idle,
   walk,
   walkBack,

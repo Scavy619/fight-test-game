@@ -50,8 +50,14 @@ The sim receives one `InputFrame` per fighter per step and does its own edge det
 Default bindings:
 - P1: `A D` move, `W` jump, `S` crouch, `F` light, `G` heavy, `H` special, `R` block, `T` dodge.
 - P2: arrows, `K` light, `L` heavy, `;` special, `I` block, `O` dodge. Numpad `1 2 3 4 5` mirror light, heavy, special, block, dodge.
+- Grab button: `Q` (P1), `U` or Numpad 7 (P2), LB on a pad. Power button: `E` (P1), `P` or Numpad 8 (P2), LT on a pad; hold to charge, release to strike. Light + heavy together also grabs (`F G`, `K L`, X + Y, left + right mouse buttons in solo).
+- Solo action bar: six clickable buttons above the meters (BLOCK, DODGE, GRAB, POWER, SPECIAL, ULTIMATE). While the cursor is over the bar it stops steering the fighter; the left button presses the hovered action (BLOCK and POWER are held). The two presses may be up to `GRAB_CHORD_FRAMES` (4) apart: a light or heavy that just started becomes the grab when the other button arrives.
+- Holding heavy after a heavy normal charges the power strike (`charge` state); releasing, or reaching the maximum charge, throws it. On the mouse: hold the right button.
+- Holding back (away from the opponent) blocks when the opponent's strike can reach or a projectile is heading in (proximity guard); back + down blocks low. The block button still works everywhere and is the only way to block pre-emptively.
 - Gamepad (standard mapping): stick or d-pad, X light, Y heavy, B special, RB block, A dodge. First pad drives P1 in practice mode; in versus, pad 1 is P1 and pad 2 is P2, keyboard stays active for both.
-- Menus: P1 or P2 direction keys navigate, light confirms, heavy goes back, `Esc` pauses, `Enter` also confirms.
+- Menus: P1 or P2 direction keys navigate, light or dodge confirms (X or A on a pad), heavy goes back (Y), `Esc` or Start pauses, `Enter` also confirms. In solo play both keyboard sets and every connected gamepad drive the human.
+- Difficulty handicap: `MatchConfig.damageScale` multiplies the damage and chip each side deals; solo play sets the computer's to 0.5 (easy), 0.8 (normal), 1 (hard). The mouse also works in menus: hover highlights, click confirms.
+- Mouse (solo play only, merged with P1's keyboard and pad): the fighter walks toward the cursor outside a 44 px dead zone, jumps when the cursor is more than 1.45 body heights above its feet, crouches when the cursor is below the floor line; left button light, right button heavy, middle button special, right + middle with a full meter ultimate. Block and dodge stay on the keyboard. A click shorter than one step still counts as a press.
 
 ### 3.3 Sim rules
 
@@ -61,8 +67,8 @@ Fighter states: `idle, walk, crouch, prejump (3f), air, attack, block, blockstun
 
 - **Movement**: walk speed, jump velocity and gravity come from the fighter's stats. Fighters turn to face the opponent whenever grounded and not attacking. Bodies cannot overlap (push apart), except during a forward dodge.
 - **Moves** are frame data: `startup`, `active`, `recovery` frames; `damage`; `level` (`mid`, `low`, `overhead`); `hitstun`, `blockstun`; `knockback {x, y}`; one or more hitboxes `{x, y, w, h}` relative to the fighter origin (feet centre), with the frames they are live; optional self velocity per frame range; optional invulnerable frame range; optional projectile spawn; `launches` (causes knockdown); `throw` (unblockable, only hits grounded non-stunned opponents at close range); `chip` fraction; `meterGain`; `cancels` (slots this move may cancel into on hit or block, until a given frame); `anim` id; timed `fx` tags.
-- **Move slots**: `light, heavy, crouchLight, crouchHeavy, airLight, airHeavy, specialN, specialF, specialD, ultimate`. `special` with no direction is N, with forward held is F, with down held is D.
-- **Combos**: default cancel chain light → heavy → special → ultimate. Each further hit in a combo does 0.9x the previous scaling, floor 0.4. Combo counter resets when the defender leaves hitstun.
+- **Move slots**: `light, heavy, crouchLight, crouchHeavy, airLight, airHeavy, specialN, specialF, specialD, ultimate, throw, power`. `special` with no direction is N, with forward held is F, with down held is D. `power` is the charged strike: entered from the `charge` state (heavy held `CHARGE_HOLD_FRAMES` after any heavy, released or auto-fired at `CHARGE_MAX_FRAMES`), `unblockable`, with `armor` frames over its startup (hits deal damage but do not interrupt it unless they KO), launches, never cancels. `throw` is the grab: light and heavy pressed together (within the press buffer) on the ground; its move sets `throw: true`, reaches about 70-80 px, cannot be blocked, whiffs against airborne, stunned or dodging opponents, tosses on hit (`launches`), never cancels, and has enough recovery to be punished on a whiff.
+- **Combos**: default cancel chain light → light → heavy → special → ultimate (a light may cancel into one more light, never a third: the sim tracks `chainedFrom`). Cancel windows run to the end of the move once it has connected, so late presses still chain. Each further hit in a combo does 0.9x the previous scaling, floor 0.4. Combo counter resets when the defender leaves hitstun.
 - **Block**: hold block. Standing block stops `mid` and `overhead`; crouching block (down + block) stops `mid` and `low`. Air attacks are `overhead`. Blocked specials and ultimates deal chip damage (chip cannot KO). No blocking in the air.
 - **Dodge**: 18 frames, invulnerable on frames 3 to 12, travels back by default or forward if forward is held (forward dodge passes through the opponent). 30-frame cooldown.
 - **Hitstop**: both fighters freeze for 6 (light), 9 (heavy), 12 (special) frames on hit; half on block.
@@ -124,7 +130,7 @@ Each arena is a procedural parallax scene (far, mid, near layers, ground, ambien
 
 - `npm run test`, `npm run lint`, `npm run build` pass.
 - Both modes playable start to finish through menus; all 4 fighters and 3 arenas selectable.
-- Every fighter has all 10 move slots, animations for every state, and an ultimate with super freeze.
+- Every fighter has all 12 move slots (including the grab and the power strike), animations for every state (`charge` may use the shared base animation), and an ultimate with super freeze.
 - AI at three difficulties is beatable on easy and puts up a fight on hard.
 - AI-versus-AI balance run shows no pairing worse than about 60/40.
 - Holds 60 fps on a normal laptop in Chrome.

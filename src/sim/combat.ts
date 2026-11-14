@@ -6,7 +6,8 @@ import {
 import { type Ctx, PLAYERS, other } from './context';
 import { isAirborne, setState } from './fighter';
 import { bodyRect, liveWorldHitboxes, overlapCentre, rectsOverlap } from './geometry';
-import { moveChip, moveElement } from './moves';
+import { backHeld } from './input';
+import { inRange, moveChip, moveElement } from './moves';
 import type {
   AttackLevel, Element, Facing, FighterDef, FighterState, Hitbox, MoveSlot, PlayerIndex, Strength, Vec2,
 } from './types';
@@ -22,6 +23,7 @@ export interface HitData {
   chip: number;
   launches: boolean;
   throw: boolean;
+  unblockable: boolean;
   strength: Strength;
   element: Element;
   meterGain: number;
@@ -48,7 +50,7 @@ export function meleeHitData(def: FighterDef, slot: MoveSlot, box?: Hitbox): Hit
   return {
     slot, damage: m.damage, level: m.level, hitstun: m.hitstun, blockstun: m.blockstun,
     knockback: box?.knockback ?? m.knockback, chip: moveChip(m),
-    launches: box?.launches ?? m.launches ?? false, throw: m.throw ?? false,
+    launches: box?.launches ?? m.launches ?? false, throw: m.throw ?? false, unblockable: m.unblockable ?? false,
     strength: m.strength, element: moveElement(def, m), meterGain: m.meterGain,
   };
 }
@@ -62,7 +64,8 @@ export function projectileHitData(def: FighterDef, slot: MoveSlot): HitData {
   return {
     slot, damage: p.damage, level: p.level, hitstun: p.hitstun, blockstun: p.blockstun,
     knockback: p.knockback, chip: p.chip ?? DEFAULT_CHIP[strength], launches: p.launches ?? false,
-    throw: false, strength, element: p.element ?? moveElement(def, m), meterGain: p.meterGain ?? m.meterGain,
+    throw: false, unblockable: false, strength, element: p.element ?? moveElement(def, m),
+    meterGain: p.meterGain ?? m.meterGain,
   };
 }
 
@@ -79,7 +82,8 @@ export function canBeThrown(f: FighterState): boolean {
 /** Holding block in a state that may block (grounded neutral states become 'block' when block is held). */
 export function canBlock(f: FighterState): boolean {
   if (isAirborne(f)) return false;
-  return f.state === 'block' || (f.state === 'blockstun' && f.input.held.block);
+  const held = f.input.held;
+  return f.state === 'block' || (f.state === 'blockstun' && (held.block || backHeld(f, held)));
 }
 
 /** Standing block stops mid and overhead; crouching block stops mid and low. */
@@ -128,7 +132,7 @@ function applyBlock(ctx: Ctx, p: PendingHit, crouching: boolean): void {
   const { hit } = p;
   const before = d.health;
   // Chip never takes the last point of health.
-  if (d.health > 1) d.health = Math.max(1, d.health - Math.round(hit.damage * hit.chip));
+  if (d.health > 1) d.health = Math.max(1, d.health - Math.round(hit.damage * hit.chip * s.damageScale[p.attacker]));
   const chip = before - d.health;
 
   interruptDefender(d);
@@ -163,13 +167,29 @@ function applyHit(ctx: Ctx, p: PendingHit, wasAirborne: boolean, wasCrouching: b
   a.combo = continues ? a.combo + 1 : 1;
   if (!continues) a.comboDamage = 0;
   const scale = Math.max(COMBO_SCALING_FLOOR, COMBO_SCALING ** (a.combo - 1));
-  const damage = Math.round(hit.damage * scale);
+  const damage = Math.round(hit.damage * scale * s.damageScale[p.attacker]);
   const before = d.health;
   d.health = Math.max(0, d.health - damage);
   a.comboDamage += before - d.health;
 
   addMeter(a, hit.meterGain);
   addMeter(d, (before - d.health) * METER_PER_DAMAGE_TAKEN);
+
+  // Super armour: the defender's move keeps going (unless the hit was a KO).
+  const armor = d.state === 'attack' && d.move !== null ? ctx.defs[p.defender].moves[d.move].armor : undefined;
+  if (armor && inRange(armor, d.moveFrame) && d.health > 0) {
+    s.hitstop = Math.max(s.hitstop, HITSTOP[hit.strength]);
+    if (p.projectile === null) {
+      a.moveConnected = true;
+      a.hitGroups.push(p.group);
+    }
+    ctx.events.push({
+      type: 'hit', fighter: p.attacker, target: p.defender, slot: hit.slot, x: p.x, y: p.y,
+      element: hit.element, strength: hit.strength, damage: before - d.health, combo: a.combo,
+      launches: false, projectile: p.projectile, armored: true,
+    });
+    return;
+  }
 
   interruptDefender(d);
   d.pushback = 0;
@@ -206,7 +226,7 @@ function applyHit(ctx: Ctx, p: PendingHit, wasAirborne: boolean, wasCrouching: b
   ctx.events.push({
     type: 'hit', fighter: p.attacker, target: p.defender, slot: hit.slot, x: p.x, y: p.y,
     element: hit.element, strength: hit.strength, damage: before - d.health, combo: a.combo,
-    launches: d.knockdownOnLand, projectile: p.projectile,
+    launches: d.knockdownOnLand, projectile: p.projectile, armored: false,
   });
 }
 
@@ -222,7 +242,7 @@ export function resolveHits(ctx: Ctx, pending: readonly PendingHit[]): boolean[]
   return pending.map((p) => {
     const snap = before[p.defender];
     if (!snap) return false;
-    const blocked = !p.hit.throw && snap.canBlock && levelBlocked(p.hit.level, snap.crouching);
+    const blocked = !p.hit.throw && !p.hit.unblockable && snap.canBlock && levelBlocked(p.hit.level, snap.crouching);
     if (blocked) applyBlock(ctx, p, snap.crouching);
     else applyHit(ctx, p, snap.airborne, snap.crouching);
     return blocked;

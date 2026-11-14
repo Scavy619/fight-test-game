@@ -17,10 +17,11 @@
 - `eslint.config.js` — ESLint flat config, including the `src/sim` purity rules.
 - `index.html` — page shell with the single `#game` canvas.
 - `.claude/launch.json` — preview config running `npm run dev` on 5173.
-- `src/main.ts` — entry point: wires canvas, input, menu, scenes and loop; picks the start scene.
+- `src/main.ts` — entry point: wires canvas, keyboard, mouse, menu, scenes and loop; starts the mode select (`?mode=versus|easy|normal|hard` skips it, `?debug=input` shows inputs).
 - `src/engine/canvas.ts` — 1280x720 logical canvas, letterbox scaling, DPR and resize handling.
 - `src/engine/loop.ts` — fixed 60 Hz loop: pure `accumulate` step accounting plus `createLoop`; pauses while the tab is hidden.
 - `src/engine/input.ts` — key bindings as data, key/gamepad to `InputFrame` mapping, `InputManager`.
+- `src/engine/mouse.ts` — mouse input: `mouseToFrame` (cursor and buttons to `InputFrame`, solo play), `MouseInput` (tracks the canvas cursor, keeps short clicks), `canvasToLogical`.
 - `src/engine/menu.ts` — edge-triggered menu actions with direction repeat, combined and per player.
 - `src/engine/scenes.ts` — `Scene` interface and `SceneManager` stack (set, push, pop).
 - `src/engine/context.ts` — `GameContext` type passed to scenes, and `stepGame`.
@@ -38,7 +39,7 @@
 - `src/sim/input.ts` — edge detection and the 6-frame press buffer.
 - `src/sim/validate.ts` — `validateFighterDef(def)` for content tests; run it on every new fighter.
 - `src/sim/testFighter.ts` — complete generic 10-slot fighter used by tests and as a stand-in.
-- `src/sim/testHelpers.ts`, `src/sim/*.test.ts` — input scripting helpers and unit tests.
+- `src/sim/testHelpers.ts`, `src/sim/*.test.ts` — input scripting helpers and unit tests (`grab.test.ts`: the light + heavy grab trigger and throw rules; `feel.test.ts`: light chains, hold-back block, power strike).
 - `src/render/index.ts` — public render API re-exports.
 - `src/render/types.ts` — `Bone`, `Pose`, `Keyframe`, `Animation`, `AnimationSet`, `FighterLook`, joint names; the angle convention is documented here.
 - `src/render/anim.ts` — `samplePose` and pose interpolation helpers.
@@ -55,6 +56,8 @@
 - `gallery.html`, `src/gallery.ts` — dev-only rig gallery at `/gallery.html` (`?anim=&frame=&facing=-1&zoom=&focus=&drift=1`).
 - `src/render/fighterAnim.ts` — `pickAnimation` (sim state to animation id and frame) and `FighterAnimator` (blending, trail on active frames).
 - `src/render/hud.ts` — HUD state (damage ghost, combo pop) and drawing: health, names, pips, timer, meter, combo, announcer.
+- `src/render/actionBar.ts` — solo mouse action bar: button layout, hit test, drawing (`drawActionBar`); the solo controller in `modeSelect.ts` feeds it.
+- `src/render/controlsHelp.ts` — on-screen controls text (one source for the key names): `drawControlsStrip` above the meters in the fight, `drawControlsPanel` for the pause overlay and the mode select.
 - `src/render/stage.ts` — placeholder arena (`drawStage`, `GROUND_Y`); real arenas replace it in task 11.
 - `src/render/sparks.ts` — placeholder hit and block sparks; task 8 replaces them with particles.
 - `src/content/types.ts` — `FighterEntry { def, look, anims }`.
@@ -63,12 +66,16 @@
 - `src/content/fighters/*.test.ts` — content tests every fighter must pass: validation, animation lengths, weapon tip versus hitbox, combo bounds, scripted specials.
 - `src/render/moveVisuals.ts` — data-driven move visuals (`column`, `burst`, `streak`) spawned from sim `fx` tags via `FighterEntry.visuals`.
 - `src/scenes/fight.ts` — the fight scene: runs the sim, animators, HUD, shake, flash; `FightConfig` takes controllers (AI hook) and event listeners (effects, audio hook). Backquote toggles the hitbox debug overlay.
-- `src/scenes/pause.ts` — minimal pause overlay.
+- `src/scenes/pause.ts` — minimal pause overlay; heavy (back) leaves to the menu when the fight has `onExit`.
+- `src/scenes/modeSelect.ts` — interim title and mode select (two players, solo easy/normal/hard) and `startMode`; task 10 replaces it with the real menus. Also the controls summary shown on screen.
+- `src/ai/controller.ts` — `createAi(difficulty | AiParams, seed)`: the AI opponent (delayed view of the opponent, think timer, block/dodge, punish, anti-air, cancels, ultimate), `DIFFICULTIES`, `moveReach`.
+- `src/ai/rng.ts` — seeded RNG (mulberry32) used by the AI.
+- `src/ai/simulate.ts` — `runAiMatch`: headless AI-versus-AI match (tests, task 14 balance runner).
+- `src/ai/ai.test.ts` — determinism, activity, hard-beats-easy, reach tests.
 - `src/sim/` — (task 3) pure combat simulation and its tests.
 - `src/engine/` — (task 2) loop, input, scene manager.
 - `src/render/` — (task 4) rig, animations, drawing, HUD, effects, arenas.
 - `src/content/` — (tasks 5, 7, 11, 13) fighters, arenas, lore data, registries.
-- `src/ai/` — (task 9) AI controller.
 - `src/audio/` — (task 12) synthesized sound.
 - `src/scenes/` — (tasks 6, 10) title, select, fight, results, lore.
 - `scripts/` — (task 14) balance runner.

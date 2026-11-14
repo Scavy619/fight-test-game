@@ -56,6 +56,8 @@ export function pickAnimation(f: FighterState, def: FighterDef): AnimPick {
     case 'attack':
       if (f.move === null) return { id: 'idle', frame: sf };
       return { id: def.moves[f.move].anim, frame: f.moveFrame };
+    case 'charge':
+      return { id: 'charge', frame: sf };
     case 'block':
       return { id: f.crouching ? 'crouchBlock' : 'block', frame: sf };
     case 'blockstun':

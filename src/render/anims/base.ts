@@ -366,6 +366,47 @@ const heavy = anim(
   key(29, GUARD),
 );
 
+// Generic grab 5/2/20: weapon raised clear, both hands reach (grab at 6), hip toss over the shoulder.
+const T_REACH: PoseSpec = {
+  y: 82, lean: -22, footF: [44, 0], footB: [-28, 0], handF: [60, 118], handB: [52, 110], weaponDir: 96,
+};
+const T_TOSS: PoseSpec = {
+  y: 86, lean: 10, footF: [28, 0], footB: [-40, 0], handF: [8, 176], handB: [-8, 168], weaponDir: 130, elbowF: 1, elbowB: 1,
+};
+const throwAnim = anim(
+  false,
+  key(0, GUARD, 'out'),
+  key(3, { ...T_REACH, lean: -12, handF: [42, 122], handB: [34, 114] }, 'in'),
+  key(6, T_REACH, 'out'),
+  key(8, { ...T_REACH, lean: -8, handF: [38, 150], handB: [28, 142] }, 'in'),
+  key(12, T_TOSS),
+  key(18, { ...T_TOSS, lean: 4, handF: [-12, 150], handB: [-22, 142] }),
+  key(27, GUARD),
+);
+
+// Charge (loop): weapon drawn back high, weight on the back foot, a slow bob while heavy is held.
+const CHARGE: PoseSpec = {
+  y: 88, lean: 6, head: 84, footF: [22, 0], footB: [-28, 0], handF: [2, 176], handB: [-8, 168], weaponDir: 150,
+};
+const charge = anim(
+  true,
+  key(0, CHARGE),
+  key(14, { ...CHARGE, y: 85, lean: 9, handF: [-2, 172], handB: [-12, 164], weaponDir: 155 }),
+  key(28, CHARGE),
+);
+
+// Generic power strike 18/3/24: the charge pose held, a slow step in, then the heavy's cut (strike at 19).
+const power = anim(
+  false,
+  key(0, CHARGE),
+  key(12, { ...CHARGE, y: 90, lean: 8, footF: [26, 0] }, 'in'),
+  key(17, { y: 90, lean: -4, footF: [26, 0], footB: [-26, 0], handF: [30, 184], handB: [20, 178], weaponDir: 95 }, 'linear'),
+  key(19, H_STRIKE, 'out'),
+  key(22, H_FOLLOW),
+  key(30, { ...H_FOLLOW, lean: -18, y: 82, handF: [48, 106], handB: [36, 108], weaponDir: -40 }),
+  key(45, GUARD),
+);
+
 // Strike at frame 5.
 const CL_STRIKE: PoseSpec = {
   y: 54,
@@ -635,6 +676,9 @@ export const baseAnims: AnimationSet = {
   specialF,
   specialD,
   ultimate,
+  throw: throwAnim,
+  charge,
+  power,
 };
 
 /** Display order for galleries and tooling. */

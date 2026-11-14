@@ -105,7 +105,8 @@ export class MenuInput {
       down: a.down || b.down,
       left: a.left || b.left,
       right: a.right || b.right,
-      confirm: a.light || b.light || raw.enter,
+      // Light or dodge (X or A on a pad) confirm; heavy (Y) backs out.
+      confirm: a.light || b.light || a.dodge || b.dodge || raw.enter,
       back: a.heavy || b.heavy,
       pause: raw.escape || raw.start[0] || raw.start[1],
     });
@@ -116,7 +117,7 @@ export class MenuInput {
         down: f.down,
         left: f.left,
         right: f.right,
-        confirm: f.light || (i === 0 && raw.enter),
+        confirm: f.light || f.dodge || (i === 0 && raw.enter),
         back: f.heavy,
         pause: raw.escape || raw.start[i],
       });

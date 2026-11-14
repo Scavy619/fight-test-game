@@ -29,7 +29,7 @@ describe('hitbox geometry', () => {
 });
 
 describe('testFighter', () => {
-  it('is valid and uses all 10 slots with anim ids equal to the slot names', () => {
+  it('is valid and uses every slot with anim ids equal to the slot names', () => {
     expect(validateFighterDef(testFighter)).toEqual([]);
     expect(Object.keys(testFighter.moves).sort()).toEqual([...MOVE_SLOTS].sort());
     for (const slot of MOVE_SLOTS) expect(testFighter.moves[slot].anim).toBe(slot);

@@ -34,6 +34,7 @@ export function createMatch(config: MatchConfig): Match {
     superFreeze: null,
     winner: null,
     lastRoundResult: null,
+    damageScale: config.damageScale ? [config.damageScale[0], config.damageScale[1]] : [1, 1],
   };
   return { defs: [d0, d1], state };
 }
