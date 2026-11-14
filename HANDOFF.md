@@ -14,11 +14,11 @@ To resume: run `/savvy-flow continue the project from HANDOFF.md`, or just read 
 
 ## Status
 
-Last updated: 2026-11-11 (session paused when the usage limit was reached)
+Last updated: 2026-11-14
 
 - Phase: foundation, 4 of 14 tasks accepted and committed.
 - Accepted: 1 scaffold, 2 engine (loop, input, menu input, scene manager; `?debug=input` shows live inputs), 3 combat sim (104 tests), 5 lore (`docs/LORE.md`, `src/content/lore.ts`).
-- Task 4 (rig and neon rendering, `savvy-careful`) was still running when the session paused. Its output is UNREVIEWED and UNCOMMITTED: `src/render/**`, `gallery.html`, `src/gallery.ts`. It may be incomplete.
+- Task 4 (rig and neon rendering, `savvy-careful`) was interrupted by a usage limit on 2026-11-11 and resumed on 2026-11-14. Until it is reviewed, its output is UNREVIEWED and UNCOMMITTED: `src/render/**`, `gallery.html`, `src/gallery.ts`.
 - Tasks 6 to 14 not started.
 
 ## Next step
@@ -29,9 +29,11 @@ Last updated: 2026-11-11 (session paused when the usage limit was reached)
 4. Stop for the user's playtest of the two-player prototype.
 5. Then tasks 8 to 12 in parallel, 13, 14 (see `docs/PLAN.md`).
 
-## savvy-progress panel (optional, not finished)
+## savvy-progress panel (set up, needs a new session to show)
 
-The user asked for the savvy-flow progress bar and agents panel. The repo is cloned at `C:Usersittuclaude-kit` (github.com/johnnyvizz/claude-kit). The mod `plugins/savvy-progress` was scanned: no network, file or shell calls; it only registers two progress tools, a `/agents-info` command, UI panes, and appends one progress-reporting line to `savvy-*` worker briefs. NOT yet done: adding it to `C:Usersittu.claudesettings.json` as `"env": { "CLAUDE_CODE_PLUGIN_DIRS": "~/claude-kit/plugins/savvy-progress" }` (the user approved this), then starting a new session. Unknowns: whether `~` expands on Windows, and the mod was tested on Claude Code 2.1.286 while the CLI here is 2.1.239. Alternative: `/plugin marketplace add johnnyvizz/claude-kit` then `/plugin install savvy-progress@claude-kit`. Do not install the `savvy-flow` plugin too; the skill and agents are already installed by hand.
+The user asked for the savvy-flow progress bar and agents panel. The repo github.com/johnnyvizz/claude-kit is cloned at `C:\Users\<you>\claude-kit` and the mod is loaded through `C:\Users\<you>\.claude\settings.json`: `"env": { "CLAUDE_CODE_PLUGIN_DIRS": "~/claude-kit/plugins/savvy-progress" }`. It takes effect only in a session started after 2026-11-14. In a new session, check whether `mcp__savvy-progress__progress` is among the tools (possibly deferred) and whether `/agents-info` opens the panel; if so, the savvy-flow skill reports progress to it automatically.
+
+If it does not load: the mod was tested on Claude Code 2.1.286 and the CLI here was 2.1.239 (update Claude Code first); `~` may not expand on Windows (try the absolute path with forward slashes); or use `/plugin marketplace add johnnyvizz/claude-kit` then `/plugin install savvy-progress@claude-kit`. Do not install the `savvy-flow` plugin too; the skill and agents are already installed by hand. To remove the mod, delete the `env` entry from settings.json.
 
 ## Decisions made (do not reopen without the user)
 
