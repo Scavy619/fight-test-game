@@ -7,6 +7,7 @@
 - `docs/SPEC.md` — game design and architecture. Change only with the user's agreement.
 - `docs/PLAN.md` — task list, briefs, status.
 - `docs/BRIEF.md` — the user's original project brief (full lists of styles, weapons, gods).
+- `docs/SETUP-NEW-PC.md` — how to continue the project on another computer (requirements, savvy-flow setup, resume command).
 - `docs/LORE.md` — mythology research (Tradition) and game fiction (In this game) per fighter and arena, future roster backlog, sources.
 - `src/content/lore.ts` — typed lore text for the in-game lore screen; keep in step with `docs/LORE.md`.
 - `package.json` — npm scripts and pinned devDependencies.

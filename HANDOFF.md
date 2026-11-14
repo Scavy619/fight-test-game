@@ -31,11 +31,13 @@ Last updated: 2026-11-14
 
 Browser screenshots time out and `requestAnimationFrame` does not fire while the Claude window is minimized. Workaround used so far: in the page, replace `requestAnimationFrame` with a stub that stores the callback, toggle a fake `document.hidden` plus `visibilitychange` so the loop re-registers through the stub, then call the stored callback with timestamps 16.667 ms apart to step frames; send scripted `KeyboardEvent`s (`code` values) for input; copy the canvas to a JPEG data URL and POST it to a tiny local Node server that writes it to the scratchpad, then read the file.
 
-## savvy-progress panel (set up, needs a new session to show)
+## savvy-progress panel (working)
 
-The user asked for the savvy-flow progress bar and agents panel. The repo github.com/johnnyvizz/claude-kit is cloned at `C:\Users\<you>\claude-kit` and the mod is loaded through `C:\Users\<you>\.claude\settings.json`: `"env": { "CLAUDE_CODE_PLUGIN_DIRS": "~/claude-kit/plugins/savvy-progress" }`. It takes effect only in a session started after 2026-11-14. In a new session, check whether `mcp__savvy-progress__progress` is among the tools (possibly deferred) and whether `/agents-info` opens the panel; if so, the savvy-flow skill reports progress to it automatically.
+The savvy-flow progress bar and agents panel are loaded by hand on the original PC: github.com/johnnyvizz/claude-kit is cloned at `C:\Users\<you>\claude-kit` and `C:\Users\<you>\.claude\settings.json` has `"env": { "CLAUDE_CODE_PLUGIN_DIRS": "~/claude-kit/plugins/savvy-progress" }`. Confirmed working on 2026-11-14: the tools `mcp__savvy-progress__progress` (orchestrator; may need loading with ToolSearch) and `mcp__savvy-progress__step` (workers) are available, and the flow was reported as 7 of 14 tasks. In a new session, report the plan again with `progress` (task titles must equal the Agent `description` used when delegating; the titles are the Task column of `docs/PLAN.md`). Do not install the `savvy-flow` plugin on top of the hand-installed skill and agents.
 
-If it does not load: the mod was tested on Claude Code 2.1.286 and the CLI here was 2.1.239 (update Claude Code first); `~` may not expand on Windows (try the absolute path with forward slashes); or use `/plugin marketplace add johnnyvizz/claude-kit` then `/plugin install savvy-progress@claude-kit`. Do not install the `savvy-flow` plugin too; the skill and agents are already installed by hand. To remove the mod, delete the `env` entry from settings.json.
+## Moving to another computer
+
+The user wants to continue on a different PC. `docs/SETUP-NEW-PC.md` has the steps. A transfer zip was made on the original PC's Desktop (`mythic-neon-transfer.zip`: the project with git history, the savvy agents and skill, and the setup notes). The project has no GitHub remote; pushing it anywhere needs the user's explicit go-ahead.
 
 ## Decisions made (do not reopen without the user)
 
