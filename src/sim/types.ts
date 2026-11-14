@@ -47,11 +47,15 @@ export interface FrameRange { from: number; to: number }
  * `from`/`to` are move frames (default: the move's active frames).
  * `group`: each group can hit once per move instance (default 0), which is how
  * multi-hit moves are authored.
+ * `launches` / `knockback` override the move's values for hits by this box
+ * (e.g. the launching last hit of a multi-hit move).
  */
 export interface Hitbox {
   x: number; y: number; w: number; h: number;
   from?: number; to?: number;
   group?: number;
+  launches?: boolean;
+  knockback?: Vec2;
 }
 
 /** Self velocity (facing right, px/frame) applied on move frames from..to. */

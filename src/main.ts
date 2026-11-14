@@ -8,9 +8,8 @@ import {
   stepGame,
   type GameContext,
 } from './engine';
-import { REI_LOOK, VIRA_LOOK, baseAnims } from './render';
+import { FIGHTERS } from './content/fighters';
 import { createFightScene } from './scenes';
-import { testFighter } from './sim';
 
 const canvas = document.getElementById('game');
 if (!(canvas instanceof HTMLCanvasElement)) throw new Error('Missing #game canvas');
@@ -32,10 +31,8 @@ scenes.set(
   debug === 'input'
     ? createInputDebugScene(game)
     : createFightScene(game, {
-        fighters: [
-          { def: testFighter, look: REI_LOOK, anims: baseAnims },
-          { def: testFighter, look: VIRA_LOOK, anims: baseAnims },
-        ],
+        // Rei (P1) versus Vira (P2) until the select screen exists.
+        fighters: [FIGHTERS.rei, FIGHTERS.vira],
       }),
 );
 

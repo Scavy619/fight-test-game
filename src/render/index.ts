@@ -17,3 +17,7 @@ export {
   type HudInfo, type HudSide, type Announcement,
 } from './hud';
 export { Sparks, SPARK_FRAMES } from './sparks';
+export {
+  MoveVisuals, placeVisual, DEFAULT_VISUAL_LIFE,
+  type VisualSpec, type VisualKind, type ColumnSpec, type BurstSpec, type StreakSpec, type LiveVisual,
+} from './moveVisuals';

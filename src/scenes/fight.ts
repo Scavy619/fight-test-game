@@ -7,6 +7,7 @@ import { rgba } from '../render/color';
 import { FighterAnimator } from '../render/fighterAnim';
 import { createFighterView } from '../render/fighterView';
 import { HudState, drawHud, type HudInfo } from '../render/hud';
+import { MoveVisuals } from '../render/moveVisuals';
 import { Sparks } from '../render/sparks';
 import { GROUND_Y, drawStage } from '../render/stage';
 import {
@@ -67,6 +68,7 @@ export function createFightScene(game: GameContext, config: FightConfig): Scene 
   };
   const hud = new HudState(info.maxHealth);
   const sparks = new Sparks();
+  const visuals = new MoveVisuals();
 
   let match = newMatch();
   let shakeAmp = 0;
@@ -89,6 +91,7 @@ export function createFightScene(game: GameContext, config: FightConfig): Scene 
     for (const a of animators) a.reset();
     hud.reset(match.state.fighters);
     sparks.clear();
+    visuals.clear();
     shakeAmp = shakeLeft = shakeX = shakeY = 0;
     flashLeft = 0;
   }
@@ -113,6 +116,11 @@ export function createFightScene(game: GameContext, config: FightConfig): Scene 
         shake(BLOCK_SHAKE);
         sparks.block(e.x, e.y);
         break;
+      case 'fx': {
+        const spec = entries[e.fighter].visuals?.[e.tag];
+        if (spec) visuals.spawn(spec, e.x, e.y, match.state.fighters[e.fighter].facing, accents[e.fighter]);
+        break;
+      }
       default:
         break;
     }
@@ -172,6 +180,8 @@ export function createFightScene(game: GameContext, config: FightConfig): Scene 
     for (const i of PLAYERS) if (advanced[i]) animators[i].update(st.fighters[i], defs[i]);
     hud.update(st.fighters);
     sparks.update();
+    // Move visuals belong to the frozen world: they hold during hitstop.
+    if (advanced[0] || advanced[1]) visuals.update();
 
     if (shakeLeft > 0) {
       shakeLeft -= 1;
@@ -303,6 +313,7 @@ export function createFightScene(game: GameContext, config: FightConfig): Scene 
     const bottom: PlayerIndex = top === 0 ? 1 : 0;
     animators[bottom].view.draw(ctx, GROUND_Y);
     animators[top].view.draw(ctx, GROUND_Y);
+    visuals.draw(ctx, GROUND_Y);
     drawProjectiles(ctx);
     sparks.draw(ctx, GROUND_Y);
     if (debugBoxes) drawDebug(ctx);

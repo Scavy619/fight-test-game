@@ -40,12 +40,13 @@ export function bodyRect(f: FighterState, def: FighterDef): Rect {
   return { x: f.x - width / 2, y: f.y, w: width, h };
 }
 
-/** World rects of the fighter's hitboxes live this frame, with their hit group. */
-export function liveWorldHitboxes(f: FighterState, def: FighterDef): (Rect & { group: number })[] {
+/** World rects of the fighter's hitboxes live this frame, with their hit group and source box. */
+export function liveWorldHitboxes(f: FighterState, def: FighterDef): (Rect & { group: number; box: Hitbox })[] {
   if (f.state !== 'attack' || f.move === null) return [];
   return liveHitboxes(def.moves[f.move], f.moveFrame).map((b) => ({
     ...hitboxToWorld(b, f.x, f.y, f.facing),
     group: b.group ?? 0,
+    box: b,
   }));
 }
 

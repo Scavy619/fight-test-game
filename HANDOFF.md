@@ -16,16 +16,20 @@ To resume: run `/savvy-flow continue the project from HANDOFF.md`, or just read 
 
 Last updated: 2026-11-14
 
-- Phase: prototype, 6 of 14 tasks accepted and committed.
-- Accepted: 1 scaffold, 2 engine, 3 combat sim, 4 rig and neon rendering, 5 lore, 6 fight scene and HUD. `npm run dev` now opens a playable two-player match (both sides use the sim's stand-in test fighter with the Rei and Vira looks).
-- In progress: task 7 (fighters Rei and Vira, `savvy-careful`). Uncommitted files in `src/content/fighters`, `src/render/moveVisuals.ts`, `src/main.ts` are unreviewed worker output.
+- Phase: prototype complete, 7 of 14 tasks accepted and committed. `npm run dev` opens Rei (P1) versus Vira (P2), a full two-player best-of-three match. 260 tests pass.
+- Accepted: 1 scaffold, 2 engine, 3 combat sim, 4 rig and rendering, 5 lore, 6 fight scene and HUD, 7 fighters Rei and Vira.
+- WAITING FOR THE USER: the prototype playtest checkpoint. Do not start tasks 8 to 14 until the user has played and given feedback (or says to continue).
 - Tasks 8 to 14 not started.
 
 ## Next step
 
-1. Review task 7: run test, lint, build; play Rei versus Vira in the browser with the Backquote debug overlay on and check that hitboxes line up with the drawn weapons; commit.
-2. Stop for the user's playtest of the two-player prototype.
-3. Then tasks 8 to 12 in parallel, 13, 14 (see `docs/PLAN.md`).
+1. Get the user's playtest feedback (feel of movement and attacks, speed, controls on one keyboard, look). Turn concrete complaints into a defect list.
+2. Apply feedback, then delegate tasks 8 to 12 in parallel (effects, AI, menus, arenas, audio; briefs in `docs/PLAN.md`), each reviewed and committed separately.
+3. Task 13 (Sun Wukong and Thor), then task 14 (balance and polish).
+
+## How to check visuals when the app window is minimized
+
+Browser screenshots time out and `requestAnimationFrame` does not fire while the Claude window is minimized. Workaround used so far: in the page, replace `requestAnimationFrame` with a stub that stores the callback, toggle a fake `document.hidden` plus `visibilitychange` so the loop re-registers through the stub, then call the stored callback with timestamps 16.667 ms apart to step frames; send scripted `KeyboardEvent`s (`code` values) for input; copy the canvas to a JPEG data URL and POST it to a tiny local Node server that writes it to the scratchpad, then read the file.
 
 ## savvy-progress panel (set up, needs a new session to show)
 
@@ -54,3 +58,4 @@ If it does not load: the mod was tested on Claude Code 2.1.286 and the CLI here 
 - Sim notes for later tasks: `moveFrame` and `stateFrame` are 1-based; hitboxes are lower-left boxes relative to the feet centre (see `src/sim/geometry.ts`); there is an extra `land` state (4 frames after an air attack lands; draw it with the crouch pose); ultimate startup must exceed the 45-frame super freeze; throws exist only as a `throw: true` move property; `passThrough` frame ranges skip body push (for dashes and teleports); there is no juggle limit, so new fighters' frame data must be checked for infinites (the randomized combo test in `src/sim/data.test.ts` is the pattern).
 - Render notes for later tasks: animations are written with `pose()`/`key()`/`anim()` in `src/render/pose.ts` (degrees); weapon trails should be recorded only on a move's active frames (the gallery records whole animations, so its swooshes are oversized); the walk animation slides about 1.6 px per frame and needs matching to each fighter's walk speed; polish candidates for task 14: smoother trail shading, stronger strike silhouettes, wider cape, Wukong's feathers.
 - Fight scene notes: after resuming from pause a held attack key reaches the sim as a fresh press (fix in task 10 with the menus: ignore inputs until released); a heavy press backs out of the match-end screen only when `onExit` is set (task 10 sets it); a real time-out, a double KO and gamepads are unit-tested but not yet seen in the browser.
+- Fighter notes: `Hitbox` can override `launches` and `knockback` per box (used for launching last hits). Rei's specials do not cancel into his ultimate (keeps combos at 10 hits or fewer); the 10-hit limit is checked by random play only, and a jump-in route may reach 12. Open polish items for tasks 8 and 14: Rei's shadow step reads as a dash (he stays visible; hide the fighter during the pass-through frames and add bursts), ultimate weapon trails cover the wind-ups, Vira's lunge is hard to punish on block, Vira's light and crouchLight look alike, projectiles still use the generic orb.

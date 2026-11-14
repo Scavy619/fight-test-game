@@ -96,6 +96,31 @@ describe('hits', () => {
     expect(hits.map((h) => h.damage)).toEqual([72, 65, 58, 52, 47]);
     expect(m.state.fighters[1].health).toBe(1000 - 294);
   });
+
+  it('a hitbox can override launches and knockback (launching last hit)', () => {
+    const boxes = testFighter.moves.ultimate.hitboxes.map((b, k, all) =>
+      k === all.length - 1 ? { ...b, launches: true, knockback: { x: 3, y: 12 } } : b,
+    );
+    const def = withMove(testFighter, 'ultimate', { hitboxes: boxes });
+    const m = fightMatch({ p0: def });
+    place(m, 500, 600);
+    m.state.fighters[0].meter = 100;
+    const events = run(m, 160, tap({ heavy: true, special: true }));
+    const hits = ofType(events, 'hit');
+    expect(hits.map((h) => h.launches)).toEqual([false, false, false, false, true]);
+    expect(ofType(events, 'land').some((e) => e.fighter === 1 && e.hard)).toBe(true);
+  });
+
+  it('a hitbox without overrides uses the move values', () => {
+    const def = withMove(testFighter, 'light', {
+      hitboxes: [{ ...testFighter.moves.light.hitboxes[0]!, knockback: undefined, launches: undefined }],
+    });
+    const m = fightMatch({ p0: def });
+    place(m, 500, 600);
+    const events = runUntilEvent(m, 'hit', 10, tap({ light: true }));
+    expect(ofType(events, 'hit')).toMatchObject([{ launches: false }]);
+    expect(m.state.fighters[1].pushback).toBe(4);
+  });
 });
 
 describe('hitstop', () => {

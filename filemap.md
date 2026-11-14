@@ -56,6 +56,10 @@
 - `src/render/stage.ts` — placeholder arena (`drawStage`, `GROUND_Y`); real arenas replace it in task 11.
 - `src/render/sparks.ts` — placeholder hit and block sparks; task 8 replaces them with particles.
 - `src/content/types.ts` — `FighterEntry { def, look, anims }`.
+- `src/content/fighters/index.ts` — fighter registry: `FIGHTERS`, `FIGHTER_ORDER`, `FighterId`. Register new fighters here.
+- `src/content/fighters/rei.ts`, `vira.ts` — each fighter's def (stats, 10 moves), look, animations and move visuals. Copy one as the template for a new fighter.
+- `src/content/fighters/*.test.ts` — content tests every fighter must pass: validation, animation lengths, weapon tip versus hitbox, combo bounds, scripted specials.
+- `src/render/moveVisuals.ts` — data-driven move visuals (`column`, `burst`, `streak`) spawned from sim `fx` tags via `FighterEntry.visuals`.
 - `src/scenes/fight.ts` — the fight scene: runs the sim, animators, HUD, shake, flash; `FightConfig` takes controllers (AI hook) and event listeners (effects, audio hook). Backquote toggles the hitbox debug overlay.
 - `src/scenes/pause.ts` — minimal pause overlay.
 - `src/sim/` — (task 3) pure combat simulation and its tests.

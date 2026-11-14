@@ -10,8 +10,8 @@ Status values: `todo`, `in progress`, `accepted`. Update this file when a task i
 | 4 | Rig and neon rendering | Careful | 1 | accepted |
 | 5 | Research and lore | Medium | 1 | accepted |
 | 6 | Fight scene and HUD | Medium | 2, 3, 4 | accepted |
-| 7 | Fighters Rei and Vira | Careful | 6 | in progress |
-| – | Checkpoint: user playtests the prototype | – | 7 | todo |
+| 7 | Fighters Rei and Vira | Careful | 6 | accepted |
+| – | Checkpoint: user playtests the prototype | – | 7 | waiting for the user |
 | 8 | Effects and cinematics | Medium | 7 | todo |
 | 9 | AI opponent | Medium | 7 | todo |
 | 10 | Menus and lore screen | Medium | 5, 7 | todo |

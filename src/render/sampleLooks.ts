@@ -1,26 +1,11 @@
+import { REI_LOOK } from '../content/fighters/rei';
+import { VIRA_LOOK } from '../content/fighters/vira';
 import type { FighterLook } from './types';
 
+// Rei's and Vira's looks live with their fighter data in src/content/fighters.
+export { REI_LOOK, VIRA_LOOK };
+
 /** Reference looks for the gallery and for content to start from. */
-export const REI_LOOK: FighterLook = {
-  accent: '#2FF3E0',
-  secondary: '#B48CFF',
-  height: 1,
-  bulk: 0.86,
-  headStyle: 'topknot',
-  ribbon: 'scarf',
-  weapon: { type: 'katana', length: 96, color: '#CFFBFF' },
-};
-
-export const VIRA_LOOK: FighterLook = {
-  accent: '#FF8A2A',
-  secondary: '#FFD23D',
-  height: 1,
-  bulk: 0.94,
-  headStyle: 'braid',
-  ribbon: 'sash',
-  weapon: { type: 'spear', length: 168, color: '#FFD23D' },
-};
-
 export const WUKONG_LOOK: FighterLook = {
   accent: '#5CFF8A',
   secondary: '#FFC940',

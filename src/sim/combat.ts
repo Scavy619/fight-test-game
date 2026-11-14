@@ -8,7 +8,7 @@ import { isAirborne, setState } from './fighter';
 import { bodyRect, liveWorldHitboxes, overlapCentre, rectsOverlap } from './geometry';
 import { moveChip, moveElement } from './moves';
 import type {
-  AttackLevel, Element, Facing, FighterDef, FighterState, MoveSlot, PlayerIndex, Strength, Vec2,
+  AttackLevel, Element, Facing, FighterDef, FighterState, Hitbox, MoveSlot, PlayerIndex, Strength, Vec2,
 } from './types';
 
 /** Everything a connecting attack needs, from a move or a projectile. */
@@ -42,11 +42,13 @@ export interface PendingHit {
   projectile: number | null;
 }
 
-export function meleeHitData(def: FighterDef, slot: MoveSlot): HitData {
+/** Hit data of a melee move; `box` overrides `launches` and `knockback` when it sets them. */
+export function meleeHitData(def: FighterDef, slot: MoveSlot, box?: Hitbox): HitData {
   const m = def.moves[slot];
   return {
     slot, damage: m.damage, level: m.level, hitstun: m.hitstun, blockstun: m.blockstun,
-    knockback: m.knockback, chip: moveChip(m), launches: m.launches ?? false, throw: m.throw ?? false,
+    knockback: box?.knockback ?? m.knockback, chip: moveChip(m),
+    launches: box?.launches ?? m.launches ?? false, throw: m.throw ?? false,
     strength: m.strength, element: moveElement(def, m), meterGain: m.meterGain,
   };
 }
@@ -101,7 +103,7 @@ export function collectMeleeHits(ctx: Ctx): PendingHit[] {
       if (a.hitGroups.includes(box.group) || !rectsOverlap(box, hurt)) continue;
       const c = overlapCentre(box, hurt);
       pending.push({
-        attacker: i, defender: d, hit: meleeHitData(def, a.move), x: c.x, y: c.y,
+        attacker: i, defender: d, hit: meleeHitData(def, a.move, box.box), x: c.x, y: c.y,
         pushDir: a.facing, group: box.group, projectile: null,
       });
       break;
