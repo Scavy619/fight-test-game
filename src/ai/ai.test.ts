@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { FIGHTERS } from '../content/fighters';
+import { HEROES } from '../content/heroes';
 import { testFighter, type FighterDef, type MoveDef, type PlayerIndex } from '../sim';
 import { createAi, DIFFICULTIES, moveReach, runAiMatch } from './index';
 import { createRng } from './rng';
 
-const rei = FIGHTERS.rei.def;
-const vira = FIGHTERS.vira.def;
+const arjuna = HEROES.arjuna.def;
+const bhima = HEROES.bhima.def;
 
 describe('rng', () => {
   it('is reproducible for a seed and stays in [0, 1)', () => {
@@ -37,14 +37,14 @@ describe('moveReach', () => {
 describe('AI controller', () => {
   it('is deterministic for a seed', () => {
     const run = (): string => {
-      const r = runAiMatch([rei, vira], [createAi('normal', 7), createAi('hard', 11)], { roundSeconds: 30 });
+      const r = runAiMatch([arjuna, bhima], [createAi('normal', 7), createAi('hard', 11)], { roundSeconds: 30 });
       return JSON.stringify([r.frames, r.winner, r.match.state]);
     };
     expect(run()).toBe(run());
   });
 
   it('attacks, blocks and lands hits in a match', () => {
-    const r = runAiMatch([rei, vira], [createAi('normal', 3), createAi('normal', 4)]);
+    const r = runAiMatch([bhima, bhima], [createAi('normal', 3), createAi('normal', 4)]);
     expect(r.match.state.phase).toBe('matchEnd');
     expect(r.counts.hit ?? 0).toBeGreaterThan(10);
     expect(r.counts.block ?? 0).toBeGreaterThan(3);
@@ -59,11 +59,13 @@ describe('AI controller', () => {
     expect(Object.values(frame).every((v) => v === false)).toBe(true);
   });
 
-  it('hard beats easy in most of 20 matches (sides alternate)', () => {
+  it('hard beats easy in most of 20 matches (mirror matches, sides alternate)', () => {
+    // Mirror matches keep the hero matchup out of it; cross-hero balance has its own pass (HANDOFF).
     let hardWins = 0;
     for (let k = 0; k < 20; k++) {
       const hardSide: PlayerIndex = k % 2 === 0 ? 0 : 1;
-      const defs: [FighterDef, FighterDef] = k % 4 < 2 ? [rei, vira] : [vira, rei];
+      const hero = k % 4 < 2 ? arjuna : bhima;
+      const defs: [FighterDef, FighterDef] = [hero, hero];
       const hard = createAi('hard', 1000 + k);
       const easy = createAi('easy', 2000 + k);
       const r = runAiMatch(defs, hardSide === 0 ? [hard, easy] : [easy, hard]);

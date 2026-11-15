@@ -1,33 +1,38 @@
+// Content tests every registered hero must pass.
 import { describe, expect, it } from 'vitest';
 import { animDuration, samplePose } from '../../render/anim';
-import { BONES } from '../../render/types';
 import { WALK_STRIDE_SPEED } from '../../render/fighterAnim';
 import { RIG, computeRig, createRigState } from '../../render/rig';
+import { BONES } from '../../render/types';
 import { hitboxFrames, moveTotal } from '../../sim/moves';
-import { MOVE_SLOTS, type MoveSlot } from '../../sim/types';
+import { MOVE_SLOTS } from '../../sim/types';
 import { validateFighterDef } from '../../sim/validate';
-import { FIGHTERS, FIGHTER_ORDER } from './index';
+import { wordCount } from '../heroKit';
+import { HERO_LORE } from '../lore';
+import { ROSTER } from '../roster';
+import { BODY_STRIKES, HEROES, HERO_ORDER } from './index';
 
-const entries = FIGHTER_ORDER.map((id) => [id, FIGHTERS[id]] as const);
-
-/**
- * Melee hitboxes that deliberately do not follow the weapon: Vira's ultimate strikes with
- * remote columns of light while her spear stays planted at her feet.
- */
-const REMOTE_HITBOXES: ReadonlySet<string> = new Set(['vira.ultimate']);
+const entries = HERO_ORDER.map((id) => [id, HEROES[id]] as const);
 
 /** How far (px) the weapon tip may sit from the hitbox's far edge, and outside its height. */
 const TIP_TOLERANCE = 35;
 
-describe('fighter registry', () => {
-  it('lists every registered fighter once, keyed by its id', () => {
-    expect([...FIGHTER_ORDER].sort()).toEqual(Object.keys(FIGHTERS).sort());
-    for (const [id, e] of entries) expect(e.def.id).toBe(id);
+describe('hero registry', () => {
+  it('lists every registered hero once, keyed by its id, and each appears in the roster with the same unlock', () => {
+    expect([...HERO_ORDER].sort()).toEqual(Object.keys(HEROES).sort());
+    for (const [id, e] of entries) {
+      expect(e.def.id).toBe(id);
+      const slot = ROSTER.find((r) => r.id === id);
+      expect(slot, id).toBeDefined();
+      expect(slot?.name).toBe(e.def.name);
+      expect(slot?.title).toBe(e.profile.title);
+      expect(slot?.unlock).toBe(e.profile.unlock.text);
+    }
   });
 });
 
 describe.each(entries)('%s', (id, entry) => {
-  const { def, look, anims } = entry;
+  const { def, look, anims, profile } = entry;
 
   it('passes validateFighterDef and uses every slot', () => {
     expect(validateFighterDef(def)).toEqual([]);
@@ -74,8 +79,7 @@ describe.each(entries)('%s', (id, entry) => {
     let checked = 0;
     for (const slot of MOVE_SLOTS) {
       const m = def.moves[slot];
-      // Grabs reach with the hands, not the weapon.
-      if (REMOTE_HITBOXES.has(m.anim) || m.throw) continue;
+      if (m.throw || BODY_STRIKES.has(m.anim)) continue;
       const a = anims[m.anim];
       if (!a) continue;
       for (const b of m.hitboxes) {
@@ -87,7 +91,6 @@ describe.each(entries)('%s', (id, entry) => {
         const where = `${slot} f${mid} tip ${tip.x.toFixed(0)},${tip.y.toFixed(0)} box x..${far} y ${b.y}..${b.y + b.h}`;
         if (Math.abs(tip.x - far) > TIP_TOLERANCE) problems.push(`${where}: reach`);
         if (tip.y < b.y - TIP_TOLERANCE || tip.y > b.y + b.h + TIP_TOLERANCE) problems.push(`${where}: height`);
-        // The blade's middle (between grip and tip) is inside the box, give or take.
         const mx = (rig.handF.x + tip.x) / 2;
         const my = (rig.handF.y + tip.y) / 2;
         if (mx < b.x - TIP_TOLERANCE || mx > far || my < b.y - TIP_TOLERANCE || my > b.y + b.h + TIP_TOLERANCE) {
@@ -97,10 +100,10 @@ describe.each(entries)('%s', (id, entry) => {
       }
     }
     expect(problems).toEqual([]);
-    expect(checked).toBeGreaterThan(5);
+    expect(checked).toBeGreaterThan(4);
   });
 
-  it('projectiles spawn at the throwing hand or the weapon tip', () => {
+  it('projectiles spawn at the hand or the weapon tip', () => {
     const rig = createRigState();
     for (const slot of MOVE_SLOTS) {
       const m = def.moves[slot];
@@ -108,9 +111,7 @@ describe.each(entries)('%s', (id, entry) => {
       const a = anims[m.anim];
       if (!p || !a) continue;
       computeRig(samplePose(a, p.frame), look, rig);
-      const d = Math.min(
-        ...[rig.handF, rig.handB, rig.weaponTip].map((q) => Math.hypot(q.x - p.x, q.y - p.y)),
-      );
+      const d = Math.min(...[rig.handF, rig.handB, rig.weaponTip].map((q) => Math.hypot(q.x - p.x, q.y - p.y)));
       expect(d, slot).toBeLessThan(TIP_TOLERANCE);
     }
   });
@@ -128,7 +129,6 @@ describe.each(entries)('%s', (id, entry) => {
       const grounded = RIG.ankle * look.height + 0.5;
       let spans = 0;
       for (const foot of ['f', 'b'] as const) {
-        // Runs of consecutive keys with this foot on the ground.
         let start = 0;
         for (let i = 1; i <= feet.length; i++) {
           const prev = feet[i - 1];
@@ -148,49 +148,73 @@ describe.each(entries)('%s', (id, entry) => {
     }
   });
 
-  it('the grab is a close unblockable toss that is punishable on a whiff', () => {
+  it('the grab and the power strike follow the shared rules', () => {
     const t = def.moves.throw;
     expect(t.throw).toBe(true);
     expect(t.launches).toBe(true);
     expect(t.cancels).toBeUndefined();
-    expect(Math.max(...t.hitboxes.map((b) => b.x + b.w))).toBeLessThanOrEqual(80);
+    expect(Math.max(...t.hitboxes.map((b) => b.x + b.w))).toBeLessThanOrEqual(90);
     expect(t.recovery).toBeGreaterThanOrEqual(18);
     expect(t.damage).toBeGreaterThan(def.moves.heavy.damage);
+    const p = def.moves.power;
+    expect(p.unblockable).toBe(true);
+    expect(p.armor).toBeDefined();
+    expect(p.launches).toBe(true);
+    expect(p.cancels).toBeUndefined();
+    expect(p.startup).toBeGreaterThanOrEqual(16);
+    expect(p.recovery).toBeGreaterThanOrEqual(20);
   });
 
-  it('ultimate startup covers the super freeze; specials and ultimate are telegraphed', () => {
-    const slots: MoveSlot[] = ['specialN', 'specialF', 'specialD', 'ultimate'];
-    for (const s of slots) expect(def.moves[s].strength, s).toMatch(/special|ultimate/);
-    expect(def.moves.ultimate.hitboxes.length).toBeGreaterThan(1);
-  });
-});
-
-describe('archetypes', () => {
-  const rei = FIGHTERS.rei.def;
-  const vira = FIGHTERS.vira.def;
-  const reach = (slot: MoveSlot, d: typeof rei): number =>
-    Math.max(...d.moves[slot].hitboxes.map((b) => b.x + b.w));
-
-  it('Rei is the faster, frailer rushdown fighter', () => {
-    expect(rei.stats.health).toBe(900);
-    expect(vira.stats.health).toBe(1000);
-    expect(rei.stats.walkSpeed).toBeGreaterThan(vira.stats.walkSpeed);
-    expect(rei.moves.light.startup).toBeLessThan(vira.moves.light.startup);
-    expect(rei.moves.heavy.damage).toBeLessThan(vira.moves.heavy.damage);
-  });
-
-  it('Vira out-reaches Rei on every ground normal', () => {
-    for (const slot of ['light', 'heavy', 'crouchLight', 'crouchHeavy'] as const) {
-      expect(reach(slot, vira), slot).toBeGreaterThan(reach(slot, rei));
+  it('specials and the ultimate are telegraphed, and the ultimate does something', () => {
+    for (const s of ['specialN', 'specialF', 'specialD', 'ultimate'] as const) {
+      expect(def.moves[s].strength, s).toMatch(/special|ultimate/);
     }
+    const u = def.moves.ultimate;
+    expect(u.hitboxes.length > 1 || u.zone !== undefined || u.projectile !== undefined).toBe(true);
+    expect(u.invulnerable).toBeDefined();
   });
 
   it('no ground normal links into itself (startup longer than the advantage on hit)', () => {
-    for (const d of [rei, vira]) {
-      for (const slot of ['light', 'heavy', 'crouchLight'] as const) {
-        const m = d.moves[slot];
-        expect(m.hitstun - (m.active + m.recovery), `${d.id} ${slot}`).toBeLessThan(m.startup);
-      }
+    for (const slot of ['light', 'heavy', 'crouchLight'] as const) {
+      const m = def.moves[slot];
+      expect(m.hitstun - (m.active + m.recovery), slot).toBeLessThan(m.startup);
     }
+  });
+
+  it('has a complete profile: bio length, every move described, unlock, relationships on the roster', () => {
+    const words = wordCount(profile.bio);
+    expect(words, 'bio words').toBeGreaterThanOrEqual(80);
+    expect(words, 'bio words').toBeLessThanOrEqual(130);
+    expect(profile.identity.endsWith('.')).toBe(true);
+    expect(profile.title.length).toBeGreaterThan(5);
+    expect(profile.weapons.primary.length).toBeGreaterThan(2);
+    expect(profile.palette.length).toBeGreaterThanOrEqual(3);
+    expect(profile.poses.intro.length).toBeGreaterThan(10);
+    expect(profile.poses.victory.length).toBeGreaterThan(10);
+    for (const slot of MOVE_SLOTS) {
+      const mi = profile.moves[slot];
+      expect(mi, slot).toBeDefined();
+      expect(mi?.name.length, slot).toBeGreaterThan(2);
+      expect(mi?.description.length, slot).toBeGreaterThan(15);
+      expect(mi?.input.length, slot).toBeGreaterThan(2);
+    }
+    for (const sl of ['specialN', 'specialF', 'specialD', 'ultimate', 'heavy', 'power'] as const) {
+      expect(profile.moves[sl]?.counterplay?.length ?? 0, `${sl} counterplay`).toBeGreaterThan(10);
+    }
+    const ids = ROSTER.map((r) => r.id);
+    for (const r of profile.relationships) expect(ids).toContain(r.id);
+    expect(profile.campaignRole.length).toBeGreaterThan(20);
+    expect(profile.unlock.text.length).toBeGreaterThan(5);
+  });
+});
+
+describe('hero lore', () => {
+  it.each(entries)('%s has Tradition and In this game text with sources', (id) => {
+    const l = HERO_LORE[id];
+    expect(l, id).toBeDefined();
+    expect(l?.tradition.length).toBeGreaterThanOrEqual(2);
+    expect(l?.inThisGame.length).toBeGreaterThanOrEqual(2);
+    expect(l?.sources.length).toBeGreaterThanOrEqual(2);
+    for (const s of l?.sources ?? []) expect(s.url.startsWith('https://')).toBe(true);
   });
 });

@@ -10,7 +10,7 @@
 - `docs/SETUP-NEW-PC.md` — how to continue the project on another computer (requirements, savvy-flow setup, resume command).
 - `claude-setup/install.mjs` — one-command setup of the savvy-flow skill, agents and savvy-progress mod on a new computer.
 - `docs/LORE.md` — mythology research (Tradition) and game fiction (In this game) per fighter and arena, future roster backlog, sources.
-- `src/content/lore.ts` — typed lore text for the in-game lore screen; keep in step with `docs/LORE.md`.
+- `src/content/lore.ts` — typed lore text (`HERO_LORE`, premise, adaptation statement) for the gallery; keep in step with `docs/LORE.md`.
 - `package.json` — npm scripts and pinned devDependencies.
 - `tsconfig.json` — strict TypeScript settings (typecheck only, no emit).
 - `vite.config.ts` — Vite dev server (port 5173, strictPort) and Vitest config.
@@ -53,7 +53,7 @@
 - `src/render/weapons.ts` — katana, spear, staff, hammer.
 - `src/render/chain.ts` — follow chain for ribbons, braid and ponytail.
 - `src/render/color.ts` — colour helpers.
-- `src/render/sampleLooks.ts` — sample `FighterLook`s for the four fighters (content tasks may move them into `src/content/fighters/`).
+- `src/render/sampleLooks.ts` — reference looks: the prototype looks (Rei, Vira, Wukong, Thor) and `ASTRA_LOOKS` (the eight heroes; Arjuna and Bhima come from their hero files). `/gallery.html?set=astra` shows the ASTRA set.
 - `src/render/anims/base.ts` — `baseAnims`: shared animations for every state and the generic move slots.
 - `gallery.html`, `src/gallery.ts` — dev-only rig gallery at `/gallery.html` (`?anim=&frame=&facing=-1&zoom=&focus=&drift=1`).
 - `src/render/fighterAnim.ts` — `pickAnimation` (sim state to animation id and frame) and `FighterAnimator` (blending, trail on active frames).
@@ -67,9 +67,13 @@
 - `src/render/kit.test.ts` — draft looks, weapon specs, palettes, status labels.
 - `src/render/stage.ts` — procedural stage with palettes (`STAGE_PALETTES`, `drawStage`, `GROUND_Y`); parallax arenas are a later phase.
 - `src/render/sparks.ts` — placeholder hit and block sparks; task 8 replaces them with particles.
-- `src/content/fighters/index.ts` — fighter registry: `FIGHTERS`, `FIGHTER_ORDER`, `FighterId`. Register new fighters here.
-- `src/content/fighters/rei.ts`, `vira.ts` — each fighter's def (stats, 10 moves), look, animations and move visuals. Copy one as the template for a new fighter.
-- `src/content/fighters/*.test.ts` — content tests every fighter must pass: validation, animation lengths, weapon tip versus hitbox, combo bounds, scripted specials.
+- `src/content/heroes/index.ts` — hero registry: `HEROES`, `HERO_ORDER`, `HeroId`, `BODY_STRIKES`. Register new heroes here.
+- `src/content/heroes/arjuna.ts`, `bhima.ts` — one file per hero: stats, 12 moves, look, animations, visuals, projectile looks and the profile (bio, move descriptions, unlock). Copy one as the template.
+- `src/content/heroKit.ts` — authoring helpers: `tipBox` and `weaponPoints` (hitboxes and projectile spawns from the strike pose), `attackAnim`, `idleAnim`, `walkKeys`, `info`, shared cancel lists.
+- `src/content/roster.ts` — the full eight-hero roster (names, titles, unlock text) the select screen shows, including heroes not written yet.
+- `src/content/heroes/heroes.test.ts` — tests every hero must pass (validation, animation lengths, weapon tip versus hitbox, projectile spawns, walk stride, grab and power rules, profile completeness, lore). `combos.test.ts`: random combo bounds over every pairing. `chains.test.ts`: light, light, heavy as one combo and the ultimate trigger.
+- `src/scenes/charSelect.ts` — character select (eight tiles, info panel, locked and coming-soon states); `heroAvailability`.
+- `src/render/text.ts` — `wrapText`, `drawWrapped` for menu text.
 - `src/render/moveVisuals.ts` — data-driven move visuals (`column`, `burst`, `streak`) spawned from sim `fx` tags via `FighterEntry.visuals`.
 - `src/scenes/fight.ts` — the fight scene: runs the sim, animators, HUD, shake, flash; `FightConfig` takes controllers (AI hook) and event listeners (effects, audio hook). Backquote toggles the hitbox debug overlay.
 - `src/scenes/pause.ts` — minimal pause overlay; heavy (back) leaves to the menu when the fight has `onExit`.

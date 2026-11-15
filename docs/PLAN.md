@@ -31,7 +31,7 @@ The user replaced the phase-1 roster and scope with the ASTRA brief (eight heroe
 | A1 | Foundation: ASTRA docs, hero profile types, save system, title and main menu shell, controls screen gate | done |
 | A2 | Sim mechanics: `moveFor` and stances, shields, late-guard pierce, zones (slow, strike, decoy, mark), returning projectiles, slow fields; validator; AI zone awareness | done |
 | A3 | Render kit: bow, mace, axe, sword; new head and ribbon styles; projectile looks; zone and decoy drawing; status labels; procedural portraits; stage palettes | done |
-| A4 | Heroes Arjuna and Bhima; remove Rei and Vira; character select v1; Versus CPU and Two Players on the new roster | todo |
+| A4 | Heroes Arjuna and Bhima; remove Rei and Vira; character select v1; Versus CPU and Two Players on the new roster | done |
 | A5 | Heroes Ekalavya and Abhimanyu; Practice mode; Gallery scene | todo |
 | A6 | Heroes Karna and Ghatotkacha; Arcade mode and unlocks | todo |
 | A7 | Heroes Parashurama and Ashwatthama (stances); balance script and AI tuning | todo |

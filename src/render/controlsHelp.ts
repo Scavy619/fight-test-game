@@ -2,6 +2,10 @@
 // for the pause overlay and the mode select. One place for the key names so the text
 // stays in step with `src/engine/input.ts` and `src/engine/mouse.ts`.
 import { HUD_FONT, P_COLORS } from './hud';
+import { wrapText } from './text';
+
+/** Width available to one controls column in the full panel. */
+const COLUMN_WIDTH = 390;
 
 export const CYAN = '#2FF3E0';
 const TEXT = '#C8D2F0';
@@ -99,8 +103,12 @@ export function drawControlsPanel(ctx: CanvasRenderingContext2D, cx: number, top
   columns.forEach((c, k) => {
     const x = colX[k] ?? cx;
     line(ctx, c.title, x, top, 'center', c.color, head);
-    c.lines.forEach((s, j) => line(ctx, s, x, top + 24 + j * 20, 'center', TEXT, body));
-    bottom = Math.max(bottom, top + 24 + c.lines.length * 20);
+    ctx.font = body;
+    ctx.fillStyle = TEXT;
+    ctx.textAlign = 'center';
+    const lines = c.lines.flatMap((l) => wrapText(ctx, l, COLUMN_WIDTH));
+    lines.forEach((l, j) => ctx.fillText(l, x, top + 24 + j * 20));
+    bottom = Math.max(bottom, top + 24 + lines.length * 20);
   });
   const gy = bottom + 18;
   GENERAL_LINES.forEach((s, j) => line(ctx, s, cx, gy + j * 20, 'center', j === 0 ? '#FFFFFF' : DIM, body));

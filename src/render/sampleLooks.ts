@@ -1,9 +1,27 @@
-import { REI_LOOK } from '../content/fighters/rei';
-import { VIRA_LOOK } from '../content/fighters/vira';
+import { ARJUNA_LOOK } from '../content/heroes/arjuna';
+import { BHIMA_LOOK } from '../content/heroes/bhima';
 import type { FighterLook } from './types';
 
-// Rei's and Vira's looks live with their fighter data in src/content/fighters.
-export { REI_LOOK, VIRA_LOOK };
+/** Phase-1 prototype looks (Rei and Vira were the first two fighters), kept as rig reference looks. */
+export const REI_LOOK: FighterLook = {
+  accent: '#2FF3E0',
+  secondary: '#B48CFF',
+  height: 1,
+  bulk: 0.86,
+  headStyle: 'topknot',
+  ribbon: 'scarf',
+  weapon: { type: 'katana', length: 96, color: '#CFFBFF' },
+};
+
+export const VIRA_LOOK: FighterLook = {
+  accent: '#FF8A2A',
+  secondary: '#FFD23D',
+  height: 1,
+  bulk: 0.94,
+  headStyle: 'braid',
+  ribbon: 'sash',
+  weapon: { type: 'spear', length: 168, color: '#FFD23D' },
+};
 
 /** Reference looks for the gallery and for content to start from. */
 export const WUKONG_LOOK: FighterLook = {
@@ -39,14 +57,8 @@ export const SAMPLE_LOOKS: readonly { name: string; look: FighterLook }[] = [
  * rig gallery shows them side by side.
  */
 export const ASTRA_LOOKS: readonly { name: string; look: FighterLook }[] = [
-  {
-    name: 'Arjuna',
-    look: { accent: '#7C8CFF', secondary: '#FFB347', height: 1, bulk: 0.9, headStyle: 'topknot', ribbon: 'quiver', weapon: { type: 'bow', length: 112, color: '#E8C27A' } },
-  },
-  {
-    name: 'Bhima',
-    look: { accent: '#5FBF6E', secondary: '#D1A04A', height: 1.08, bulk: 1.3, headStyle: 'curls', ribbon: 'sash', weapon: { type: 'mace', length: 120, color: '#D1A04A' } },
-  },
+  { name: 'Arjuna', look: ARJUNA_LOOK },
+  { name: 'Bhima', look: BHIMA_LOOK },
   {
     name: 'Karna',
     look: { accent: '#FFC857', secondary: '#E0405A', height: 1.02, bulk: 1, headStyle: 'crown', ribbon: 'shawl', weapon: { type: 'spear', length: 172, color: '#FFD98A' } },

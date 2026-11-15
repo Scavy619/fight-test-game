@@ -2,12 +2,13 @@
 // by the `?mode=` deep link). Modes that later slices add are listed but disabled, with the
 // slice named in the hint, so nothing on screen is a dead button without an explanation.
 import { DIFFICULTY_DAMAGE, createAi, type Difficulty } from '../ai';
-import { FIGHTERS } from '../content/fighters';
+import { HEROES, type HeroId } from '../content/heroes';
 import { mergeFrames, mouseToFrame, type GameContext, type Scene } from '../engine';
 import { actionAt, drawActionBar, overActionBar, type ActionId } from '../render/actionBar';
-import { HUD_FONT } from '../render/hud';
+import { HUD_FONT, P_COLORS } from '../render/hud';
 import { GROUND_Y } from '../render/stage';
 import { EMPTY_INPUT, METER_MAX, type InputFrame } from '../sim';
+import { createCharSelect } from './charSelect';
 import { createControlsScreen } from './controlsScreen';
 import { createFightScene, type Controller } from './fight';
 import { ListMenu, MENU_CYAN, MENU_DIM, MENU_TEXT, drawMenuBackdrop, drawNotice, drawTitle, type ListItem } from './listMenu';
@@ -60,22 +61,34 @@ function withControlsGate(game: GameContext, solo: boolean, start: () => void): 
   game.scenes.set(createControlsScreen(game, { solo, onDone: start }));
 }
 
-/** Starts a match in the given mode; backing out returns to the main menu. */
-export function startMode(game: GameContext, mode: Mode): void {
+export interface MatchSetup {
+  mode: Mode;
+  /** Hero for P1 (the human in solo modes). */
+  player: HeroId;
+  /** Hero for P2 (the computer in solo modes). */
+  opponent: HeroId;
+}
+
+/** Heroes used by the `?mode=` deep link. */
+export const DEFAULT_HEROES: readonly [HeroId, HeroId] = ['arjuna', 'bhima'];
+
+/** Starts a match with the given heroes; backing out returns to the main menu on that mode. */
+export function startMatch(game: GameContext, setup: MatchSetup): void {
+  const { mode } = setup;
   const onExit = (): void => game.scenes.set(createMainMenuScene(game, mode));
+  const p1 = HEROES[setup.player];
+  const p2 = HEROES[setup.opponent];
   if (mode === 'versus') {
-    withControlsGate(game, false, () =>
-      game.scenes.set(createFightScene(game, { fighters: [FIGHTERS.rei, FIGHTERS.vira], onExit })),
-    );
+    withControlsGate(game, false, () => game.scenes.set(createFightScene(game, { fighters: [p1, p2], onExit })));
     return;
   }
   withControlsGate(game, true, () => {
     const seed = (Math.random() * 0xffffffff) >>> 0;
     const bar: BarState = { hover: null, active: new Set() };
-    const accent = FIGHTERS.rei.look.accent;
+    const accent = p1.look.accent;
     game.scenes.set(
       createFightScene(game, {
-        fighters: [FIGHTERS.rei, FIGHTERS.vira],
+        fighters: [p1, p2],
         controllers: [mouseAndKeyboard(game, bar), createAi(mode, seed)],
         damageScale: [1, DIFFICULTY_DAMAGE[mode]],
         onExit,
@@ -94,6 +107,39 @@ export function startMode(game: GameContext, mode: Mode): void {
       }),
     );
   });
+}
+
+/** Starts a match in the given mode with the default heroes (the `?mode=` deep link). */
+export function startMode(game: GameContext, mode: Mode): void {
+  startMatch(game, { mode, player: DEFAULT_HEROES[0], opponent: DEFAULT_HEROES[1] });
+}
+
+/** Character select for a mode, then the match. Backing out of the first pick returns to the menu. */
+export function chooseHeroes(game: GameContext, mode: Mode): void {
+  const versus = mode === 'versus';
+  const toMenu = (): void => game.scenes.set(createMainMenuScene(game, mode));
+  const first = (initial?: HeroId): void => {
+    game.scenes.set(
+      createCharSelect(game, {
+        heading: versus ? 'PLAYER 1: CHOOSE YOUR HERO' : 'CHOOSE YOUR HERO',
+        accent: P_COLORS[0],
+        initial,
+        onBack: toMenu,
+        onPick: (player) => {
+          game.scenes.set(
+            createCharSelect(game, {
+              heading: versus ? 'PLAYER 2: CHOOSE YOUR HERO' : 'CHOOSE YOUR OPPONENT',
+              accent: P_COLORS[1],
+              initial: player === 'arjuna' ? 'bhima' : 'arjuna',
+              onBack: () => first(player),
+              onPick: (opponent) => startMatch(game, { mode, player, opponent }),
+            }),
+          );
+        },
+      }),
+    );
+  };
+  first();
 }
 
 type MenuId = 'campaign' | 'arcade' | 'cpu' | 'versus' | 'practice' | 'gallery' | 'controls';
@@ -133,7 +179,7 @@ export function createMainMenuScene(game: GameContext, remember: Mode | null = n
     if (page === 'main') {
       const picked = main.update() as MenuId | 'back' | null;
       if (picked === 'cpu') page = 'cpu';
-      else if (picked === 'versus') startMode(game, 'versus');
+      else if (picked === 'versus') chooseHeroes(game, 'versus');
       else if (picked === 'controls') {
         game.scenes.set(createControlsScreen(game, { solo: true, onDone: () => game.scenes.set(createMainMenuScene(game)) }));
       }
@@ -141,7 +187,7 @@ export function createMainMenuScene(game: GameContext, remember: Mode | null = n
     }
     const picked = cpu.update() as CpuId | null;
     if (picked === 'back') page = 'main';
-    else if (picked) startMode(game, picked);
+    else if (picked) chooseHeroes(game, picked);
   }
 
   function render(ctx: CanvasRenderingContext2D): void {
