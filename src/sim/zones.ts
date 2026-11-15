@@ -5,7 +5,7 @@ import { type Ctx, PLAYERS, other } from './context';
 import type { PendingHit } from './combat';
 import { bodyRect, liveWorldHitboxes, projectileRect, rectsOverlap, zoneRect } from './geometry';
 import { moveElement } from './moves';
-import type { FighterState, MoveDef, MoveSlot, PlayerIndex, Zone } from './types';
+import type { FighterState, MoveDef, MoveSlot, PlayerIndex, Zone, ZoneDef } from './types';
 
 export const ZONE_DEFAULT_HEIGHT = 200;
 export const ZONE_DEFAULT_SLOW = 0.5;
@@ -14,8 +14,12 @@ export const SLOW_LINGER = 2;
 
 /** Spawns the move's zone(s) when its spawn frame is reached. */
 export function spawnZones(ctx: Ctx, i: PlayerIndex, f: FighterState, slot: MoveSlot, m: MoveDef): void {
-  const zd = m.zone;
-  if (!zd || f.moveFrame !== zd.frame) return;
+  for (const zd of [m.zone, ...(m.extraZones ?? [])]) {
+    if (zd && f.moveFrame === zd.frame) spawnZone(ctx, i, f, slot, m, zd);
+  }
+}
+
+function spawnZone(ctx: Ctx, i: PlayerIndex, f: FighterState, slot: MoveSlot, m: MoveDef, zd: ZoneDef): void {
   const { s } = ctx;
   const opp = s.fighters[other(i)];
   const base = zd.x === 'opponent' ? opp.x : f.x + f.facing * zd.x;

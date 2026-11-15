@@ -39,8 +39,8 @@ function checkMove(slot: string, m: MoveDef, problems: string[]): void {
   for (const fx of m.fx ?? []) if (fx.frame < 1 || fx.frame > total) p(`fx ${fx.tag} outside the move`);
   if (m.grants && (!isWhole(m.grants.frames, 1) || !m.grants.label)) p('grants needs frames >= 1 and a label');
   if (m.piercesLateGuard !== undefined && !isWhole(m.piercesLateGuard, 1)) p('piercesLateGuard must be a whole number >= 1');
-  const z = m.zone;
-  if (z) {
+  for (const z of [m.zone, ...(m.extraZones ?? [])]) {
+    if (!z) continue;
     if (z.frame < 1 || z.frame > total) p('zone frame outside the move');
     if (!(z.w > 0) || !isWhole(z.frames, 1) || !z.label) p('zone needs a positive width, frames >= 1 and a label');
     if (z.kind === 'strike') {

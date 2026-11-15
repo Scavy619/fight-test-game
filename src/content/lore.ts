@@ -57,4 +57,40 @@ export const HERO_LORE: Record<string, LoreEntry> = {
       { label: 'Ghatotkacha (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Ghatotkacha' },
     ],
   },
+  ekalavya: {
+    id: 'ekalavya',
+    name: 'Ekalavya',
+    tagline: 'The Self-Taught Archer',
+    tradition: [
+      'Ekalavya appears in the Adi Parva of the Mahabharata as a young prince of the Nishadas, a forest people. He asks the teacher Drona for instruction and is refused; he builds an image of Drona and trains himself until his skill rivals that of the best archers.',
+      'When Drona learns of it, he asks for a guru-dakshina, a teacher’s fee: Ekalavya’s right thumb, which Ekalavya gives. The story has been read for centuries as a tale of devotion and, in modern retellings, as a tale of unfair exclusion; versions and readings differ widely.',
+    ],
+    inThisGame: [
+      'Our Ekalavya is a resourceful forest archer who chooses his own tools and his own teachers. He notices that weapon corruption is harming the woodland communities, marks a safe route and organises an evacuation before he joins the heroes.',
+      'His story emphasises self-discipline, protecting a community, and the right of the people affected to decide what happens next. The episode of the thumb is not shown; his hands are his own.',
+    ],
+    sources: [
+      { label: 'Ekalavya (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Ekalavya' },
+      { label: 'Dronacharya (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Drona' },
+      { label: 'Mahabharata (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Mahabharata' },
+    ],
+  },
+  abhimanyu: {
+    id: 'abhimanyu',
+    name: 'Abhimanyu',
+    tagline: 'The Circle Breaker',
+    tradition: [
+      'Abhimanyu is the son of Arjuna and Subhadra in the Mahabharata. On the thirteenth day of the Kurukshetra war the opposing army forms the chakravyuha, a spiralling circular formation. He knows how to enter it but not how to leave, and he is killed inside it.',
+      'Many retellings describe him as a teenager. Details of the story, and of how he learned the formation, vary between tellings and regions.',
+    ],
+    inThisGame: [
+      'Our Abhimanyu is a young adult hero, quick, brave and talented. When allies are trapped by a shifting formation, he reads the pattern and signals a coordinated escape.',
+      'His chapter is about preparation and teamwork: he wants to prove himself, learns to trust the others, and plans the way out before the way in. We treat the subject with gravity and do not show his death.',
+    ],
+    sources: [
+      { label: 'Abhimanyu (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Abhimanyu' },
+      { label: 'Chakravyuha (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Chakravyuha' },
+      { label: 'Mahabharata (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Mahabharata' },
+    ],
+  },
 };

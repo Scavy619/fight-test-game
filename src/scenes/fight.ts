@@ -20,6 +20,7 @@ import {
   liveWorldHitboxes,
   projectileRect,
   step,
+  EMPTY_INPUT,
   type InputFrame,
   type Match,
   type PlayerIndex,
@@ -28,6 +29,13 @@ import {
   type Strength,
 } from '../sim';
 import { createPauseScene } from './pause';
+
+/** What a mode can do to a running fight (Practice resets, refills and reads the match). */
+export interface FightApi {
+  readonly match: Match;
+  /** Starts a fresh match with the same fighters; `skipIntro` jumps to the fight phase. */
+  reset(skipIntro?: boolean): void;
+}
 
 /** Produces one player's input for the next step (an AI plugs in here). */
 export type Controller = (match: Match, index: 0 | 1) => InputFrame;
@@ -50,6 +58,8 @@ export interface FightConfig {
   hideControls?: boolean;
   /** Stage colours (chapter or mode); default is the neon palette. */
   palette?: StagePalette;
+  /** Called every step after the sim step (Practice refills health and handles its keys). */
+  onStep?: (api: FightApi) => void;
   /** Drawn last, over the HUD (the solo action bar). */
   overlay?: (ctx: CanvasRenderingContext2D, match: Match) => void;
 }
@@ -146,6 +156,19 @@ export function createFightScene(game: GameContext, config: FightConfig): Scene 
     return match.state.projectiles.some((p) => p.owner === i && slots.includes(p.slot));
   }
 
+  const api: FightApi = {
+    get match(): Match {
+      return match;
+    },
+    reset(skipIntro = false): void {
+      match = newMatch();
+      resetTransients();
+      if (skipIntro) {
+        while (match.state.phase === 'intro') step(match, [EMPTY_INPUT, EMPTY_INPUT]);
+      }
+    },
+  };
+
   function inputFor(i: PlayerIndex): InputFrame {
     const c = config.controllers?.[i];
     return c ? c(match, i) : game.input.frames[i];
@@ -214,6 +237,7 @@ export function createFightScene(game: GameContext, config: FightConfig): Scene 
       shakeX = shakeY = 0;
     }
     if (flashLeft > 0) flashLeft -= 1;
+    config.onStep?.(api);
   }
 
   function drawProjectiles(ctx: CanvasRenderingContext2D): void {

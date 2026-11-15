@@ -193,6 +193,8 @@ export interface MoveDef {
   piercesLateGuard?: number;
   /** Spawns zone(s) on `zone.frame`. */
   zone?: ZoneDef;
+  /** Further zones spawned by the same move (e.g. a slow net plus arrow lanes). */
+  extraZones?: readonly ZoneDef[];
   /** Switches the fighter's stance on the move's first frame (index, or the next one). */
   switchStance?: number | 'next';
   /** Render hint: hide the weapon while this move's projectile is live (a thrown axe). */

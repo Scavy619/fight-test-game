@@ -1,17 +1,21 @@
 // Hero registry. One file per hero in this folder; register it here.
 import type { HeroEntry } from '../types';
+import { ABHIMANYU } from './abhimanyu';
 import { ARJUNA } from './arjuna';
 import { BHIMA, BHIMA_BODY_STRIKES } from './bhima';
+import { EKALAVYA } from './ekalavya';
 
-export type HeroId = 'arjuna' | 'bhima';
+export type HeroId = 'arjuna' | 'bhima' | 'abhimanyu' | 'ekalavya';
 
 export const HEROES: Record<HeroId, HeroEntry> = {
   arjuna: ARJUNA,
   bhima: BHIMA,
+  abhimanyu: ABHIMANYU,
+  ekalavya: EKALAVYA,
 };
 
 /** Select-screen order. */
-export const HERO_ORDER: readonly HeroId[] = ['arjuna', 'bhima'];
+export const HERO_ORDER: readonly HeroId[] = ['arjuna', 'bhima', 'abhimanyu', 'ekalavya'];
 
 /** Move anim ids whose hitboxes are the body rather than the weapon (skipped by the weapon-tip test). */
 export const BODY_STRIKES: ReadonlySet<string> = new Set([...BHIMA_BODY_STRIKES]);

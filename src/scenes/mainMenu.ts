@@ -3,14 +3,14 @@
 // slice named in the hint, so nothing on screen is a dead button without an explanation.
 import { DIFFICULTY_DAMAGE, createAi, type Difficulty } from '../ai';
 import { HEROES, type HeroId } from '../content/heroes';
-import { mergeFrames, mouseToFrame, type GameContext, type Scene } from '../engine';
-import { actionAt, drawActionBar, overActionBar, type ActionId } from '../render/actionBar';
+import type { GameContext, Scene } from '../engine';
 import { HUD_FONT, P_COLORS } from '../render/hud';
-import { GROUND_Y } from '../render/stage';
-import { EMPTY_INPUT, METER_MAX, type InputFrame } from '../sim';
 import { createCharSelect } from './charSelect';
 import { createControlsScreen } from './controlsScreen';
-import { createFightScene, type Controller } from './fight';
+import { createFightScene } from './fight';
+import { createGalleryScene } from './gallery';
+import { startPractice } from './practice';
+import { createSoloHuman } from './soloControls';
 import { ListMenu, MENU_CYAN, MENU_DIM, MENU_TEXT, drawMenuBackdrop, drawNotice, drawTitle, type ListItem } from './listMenu';
 
 /** Match modes that exist today; the menu also lists the modes later slices add. */
@@ -20,39 +20,6 @@ export const MODES: readonly Mode[] = ['versus', 'easy', 'normal', 'hard'];
 
 export function isMode(v: string | null): v is Mode {
   return v !== null && (MODES as readonly string[]).includes(v);
-}
-
-/** What the solo controller saw this step, for drawing the action bar. */
-interface BarState {
-  hover: ActionId | null;
-  active: Set<ActionId>;
-}
-
-/**
- * Human P1 for solo play: keyboard (and pad) merged with the mouse. Over the action bar the
- * cursor stops steering the fighter and the left button presses or holds the hovered action.
- */
-function mouseAndKeyboard(game: GameContext, bar: BarState): Controller {
-  return (match, i) => {
-    const f = match.state.fighters[i];
-    const m = game.mouse.state;
-    const onBar = m.active && overActionBar(m.x, m.y);
-    const hovered = onBar ? actionAt(m.x, m.y) : null;
-    bar.hover = hovered?.id ?? null;
-    bar.active.clear();
-    let mouse: InputFrame;
-    if (onBar) {
-      mouse = { ...EMPTY_INPUT };
-      if (hovered && m.light) {
-        for (const k of hovered.inputs) mouse[k] = true;
-        bar.active.add(hovered.id);
-      }
-    } else {
-      mouse = mouseToFrame(m, { x: f.x, y: f.y, height: match.defs[i].stats.height }, GROUND_Y);
-    }
-    // Solo: both keyboard sets and any gamepad drive the human (P2's inputs are otherwise unused).
-    return mergeFrames(mergeFrames(game.input.frames[0], game.input.frames[1]), mouse);
-  };
 }
 
 /** Shows the controls screen first when the player has never seen it, then runs `start`. */
@@ -84,26 +51,15 @@ export function startMatch(game: GameContext, setup: MatchSetup): void {
   }
   withControlsGate(game, true, () => {
     const seed = (Math.random() * 0xffffffff) >>> 0;
-    const bar: BarState = { hover: null, active: new Set() };
-    const accent = p1.look.accent;
+    const human = createSoloHuman(game, p1.look.accent);
     game.scenes.set(
       createFightScene(game, {
         fighters: [p1, p2],
-        controllers: [mouseAndKeyboard(game, bar), createAi(mode, seed)],
+        controllers: [human.controller, createAi(mode, seed)],
         damageScale: [1, DIFFICULTY_DAMAGE[mode]],
         onExit,
         solo: true,
-        overlay: (ctx, match) => {
-          const f = match.state.fighters[0];
-          drawActionBar(ctx, {
-            hover: bar.hover,
-            active: bar.active,
-            ultimateReady: f.meter >= METER_MAX,
-            charging: f.state === 'charge',
-            accent,
-            frame: match.state.frame,
-          });
-        },
+        overlay: human.overlay,
       }),
     );
   });
@@ -114,25 +70,31 @@ export function startMode(game: GameContext, mode: Mode): void {
   startMatch(game, { mode, player: DEFAULT_HEROES[0], opponent: DEFAULT_HEROES[1] });
 }
 
-/** Character select for a mode, then the match. Backing out of the first pick returns to the menu. */
-export function chooseHeroes(game: GameContext, mode: Mode): void {
-  const versus = mode === 'versus';
-  const toMenu = (): void => game.scenes.set(createMainMenuScene(game, mode));
+export interface PickHeroesOptions {
+  first: string;
+  second: string;
+  /** Leave from the first pick. */
+  toMenu: () => void;
+  then: (player: HeroId, opponent: HeroId) => void;
+}
+
+/** Two character selects in a row (hero, then opponent); backing out of the second returns to the first. */
+export function pickHeroes(game: GameContext, o: PickHeroesOptions): void {
   const first = (initial?: HeroId): void => {
     game.scenes.set(
       createCharSelect(game, {
-        heading: versus ? 'PLAYER 1: CHOOSE YOUR HERO' : 'CHOOSE YOUR HERO',
+        heading: o.first,
         accent: P_COLORS[0],
         initial,
-        onBack: toMenu,
+        onBack: o.toMenu,
         onPick: (player) => {
           game.scenes.set(
             createCharSelect(game, {
-              heading: versus ? 'PLAYER 2: CHOOSE YOUR HERO' : 'CHOOSE YOUR OPPONENT',
+              heading: o.second,
               accent: P_COLORS[1],
               initial: player === 'arjuna' ? 'bhima' : 'arjuna',
               onBack: () => first(player),
-              onPick: (opponent) => startMatch(game, { mode, player, opponent }),
+              onPick: (opponent) => o.then(player, opponent),
             }),
           );
         },
@@ -140,6 +102,17 @@ export function chooseHeroes(game: GameContext, mode: Mode): void {
     );
   };
   first();
+}
+
+/** Character select for a mode, then the match. Backing out of the first pick returns to the menu. */
+export function chooseHeroes(game: GameContext, mode: Mode): void {
+  const versus = mode === 'versus';
+  pickHeroes(game, {
+    first: versus ? 'PLAYER 1: CHOOSE YOUR HERO' : 'CHOOSE YOUR HERO',
+    second: versus ? 'PLAYER 2: CHOOSE YOUR HERO' : 'CHOOSE YOUR OPPONENT',
+    toMenu: () => game.scenes.set(createMainMenuScene(game, mode)),
+    then: (player, opponent) => startMatch(game, { mode, player, opponent }),
+  });
 }
 
 type MenuId = 'campaign' | 'arcade' | 'cpu' | 'versus' | 'practice' | 'gallery' | 'controls';
@@ -150,8 +123,8 @@ const MAIN_ITEMS: ListItem[] = [
   { id: 'arcade', label: 'ARCADE', hint: 'A ladder of opponents ending in your rival. Arrives with slice A6.', enabled: false },
   { id: 'cpu', label: 'VERSUS CPU', hint: 'One match against the computer at easy, normal or hard. Keyboard, mouse or pad.' },
   { id: 'versus', label: 'TWO PLAYERS', hint: 'Two players on one keyboard or two pads.' },
-  { id: 'practice', label: 'PRACTICE', hint: 'Dummy opponent, reset and the move list. Arrives with slice A5.', enabled: false },
-  { id: 'gallery', label: 'GALLERY', hint: 'Every hero: loadout, moves, story and unlock. Arrives with slice A5.', enabled: false },
+  { id: 'practice', label: 'PRACTICE', hint: 'Train against a dummy: reset, refill and a live move list.' },
+  { id: 'gallery', label: 'GALLERY', hint: 'Every hero: loadout, moves, story and unlock state.' },
   { id: 'controls', label: 'CONTROLS', hint: 'Keyboard, mouse and gamepad controls.' },
 ];
 
@@ -162,7 +135,7 @@ const CPU_ITEMS: ListItem[] = [
   { id: 'back', label: 'BACK', hint: '' },
 ];
 
-export function createMainMenuScene(game: GameContext, remember: Mode | null = null): Scene {
+export function createMainMenuScene(game: GameContext, remember: Mode | null = null, focus?: MenuId): Scene {
   const main = new ListMenu(game, MAIN_ITEMS, { y0: 286, step: 46, size: 28, w: 520, h: 40 });
   const cpu = new ListMenu(game, CPU_ITEMS, { y0: 300, step: 52 });
   let page: 'main' | 'cpu' = 'main';
@@ -172,7 +145,7 @@ export function createMainMenuScene(game: GameContext, remember: Mode | null = n
   } else if (remember === 'versus') {
     main.index = MAIN_ITEMS.findIndex((i) => i.id === 'versus');
   } else {
-    main.index = MAIN_ITEMS.findIndex((i) => i.id === 'cpu');
+    main.index = MAIN_ITEMS.findIndex((i) => i.id === (focus ?? 'cpu'));
   }
 
   function update(): void {
@@ -180,6 +153,17 @@ export function createMainMenuScene(game: GameContext, remember: Mode | null = n
       const picked = main.update() as MenuId | 'back' | null;
       if (picked === 'cpu') page = 'cpu';
       else if (picked === 'versus') chooseHeroes(game, 'versus');
+      else if (picked === 'practice') {
+        const toMenu = (): void => game.scenes.set(createMainMenuScene(game, null, 'practice'));
+        pickHeroes(game, {
+          first: 'PRACTICE: CHOOSE YOUR HERO',
+          second: 'PRACTICE: CHOOSE AN OPPONENT',
+          toMenu,
+          then: (player, opponent) => startPractice(game, player, opponent, toMenu),
+        });
+      } else if (picked === 'gallery') {
+        game.scenes.set(createGalleryScene(game, () => game.scenes.set(createMainMenuScene(game, null, 'gallery'))));
+      }
       else if (picked === 'controls') {
         game.scenes.set(createControlsScreen(game, { solo: true, onDone: () => game.scenes.set(createMainMenuScene(game)) }));
       }

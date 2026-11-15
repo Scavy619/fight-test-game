@@ -72,6 +72,11 @@
 - `src/content/heroKit.ts` — authoring helpers: `tipBox` and `weaponPoints` (hitboxes and projectile spawns from the strike pose), `attackAnim`, `idleAnim`, `walkKeys`, `info`, shared cancel lists.
 - `src/content/roster.ts` — the full eight-hero roster (names, titles, unlock text) the select screen shows, including heroes not written yet.
 - `src/content/heroes/heroes.test.ts` — tests every hero must pass (validation, animation lengths, weapon tip versus hitbox, projectile spawns, walk stride, grab and power rules, profile completeness, lore). `combos.test.ts`: random combo bounds over every pairing. `chains.test.ts`: light, light, heavy as one combo and the ultimate trigger.
+- `src/scenes/practice.ts` — Practice: dummy menu, `startPractice`, dummy controllers, move-list HUD, reset and refill hooks.
+- `src/scenes/gallery.ts` — Character gallery: grid, hero detail tabs (`tabContent`, pure), animated preview (`previewAnims`).
+- `src/scenes/soloControls.ts` — `createSoloHuman`: keyboard, pad and mouse human controller plus the action bar overlay.
+- `src/scenes/scenes.test.ts` — practice dummies and gallery content tests.
+- `src/content/heroes/ekalavya.ts`, `abhimanyu.ts` — the second pair of heroes (see arjuna.ts for the template).
 - `src/scenes/charSelect.ts` — character select (eight tiles, info panel, locked and coming-soon states); `heroAvailability`.
 - `src/render/text.ts` — `wrapText`, `drawWrapped` for menu text.
 - `src/render/moveVisuals.ts` — data-driven move visuals (`column`, `burst`, `streak`) spawned from sim `fx` tags via `FighterEntry.visuals`.

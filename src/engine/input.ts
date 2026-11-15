@@ -88,7 +88,7 @@ export function padStartPressed(pad: GamepadSnapshot | null | undefined): boolea
 }
 
 /** Keys whose default browser action (scrolling) is always suppressed. */
-const ALWAYS_PREVENT = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space']);
+const ALWAYS_PREVENT = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space', 'Tab', 'Backspace']);
 
 export interface InputManagerOptions {
   bindings?: readonly [KeyBindings, KeyBindings];

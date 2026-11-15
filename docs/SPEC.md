@@ -52,6 +52,7 @@ Default bindings:
 - P1: `A D` move, `W` jump, `S` crouch, `F` light, `G` heavy, `H` special, `R` block, `T` dodge.
 - P2: arrows, `K` light, `L` heavy, `;` special, `I` block, `O` dodge. Numpad `1 2 3 4 5` mirror light, heavy, special, block, dodge.
 - Grab button: `Q` (P1), `U` or Numpad 7 (P2), LB on a pad. Power button: `E` (P1), `P` or Numpad 8 (P2), LT on a pad; hold to charge, release to strike. Light + heavy together also grabs (`F G`, `K L`, X + Y, left + right mouse buttons in solo).
+- Practice: Backspace resets positions and refills, Tab shows or hides the move list, Esc pauses. The practice round has no clock, health refills when low and the player's meter stays full; the opponent is a standing dummy, a guarding dummy or a gentle CPU (damage 0, 0, 0.3).
 - Solo action bar: six clickable buttons above the meters (BLOCK, DODGE, GRAB, POWER, SPECIAL, ULTIMATE). While the cursor is over the bar it stops steering the fighter; the left button presses the hovered action (BLOCK and POWER are held). The two presses may be up to `GRAB_CHORD_FRAMES` (4) apart: a light or heavy that just started becomes the grab when the other button arrives.
 - Holding heavy after a heavy normal charges the power strike (`charge` state); releasing, or reaching the maximum charge, throws it. On the mouse: hold the right button.
 - Holding back (away from the opponent) blocks when the opponent's strike can reach or a projectile is heading in (proximity guard); back + down blocks low. The block button still works everywhere and is the only way to block pre-emptively.
