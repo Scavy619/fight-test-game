@@ -60,7 +60,12 @@
 - `src/render/hud.ts` — HUD state (damage ghost, combo pop) and drawing: health, names, pips, timer, meter, combo, announcer.
 - `src/render/actionBar.ts` — solo mouse action bar: button layout, hit test, drawing (`drawActionBar`); the solo controller in `modeSelect.ts` feeds it.
 - `src/render/controlsHelp.ts` — on-screen controls text (one source for the key names): `drawControlsStrip` above the meters in the fight, `drawControlsPanel` for the pause overlay and the mode select.
-- `src/render/stage.ts` — placeholder arena (`drawStage`, `GROUND_Y`); real arenas replace it in task 11.
+- `src/render/projectileView.ts` — `drawProjectile` by `ProjectileLook` kind (arrow, orb, shockwave, axe).
+- `src/render/zoneView.ts` — `drawZones` and `drawDecoyOutline`: strike lanes, marks, slow fields, decoys with text labels.
+- `src/render/statusLabels.ts` — `statusLabels` (pure) and `drawStatusLabels`: SHIELD, ARMOR, CHARGING, SLOWED, STANCE tags over a fighter.
+- `src/render/portrait.ts` — `drawPortrait`: procedural hero card from the real rig (select, gallery, campaign), `roundRect`.
+- `src/render/kit.test.ts` — draft looks, weapon specs, palettes, status labels.
+- `src/render/stage.ts` — procedural stage with palettes (`STAGE_PALETTES`, `drawStage`, `GROUND_Y`); parallax arenas are a later phase.
 - `src/render/sparks.ts` — placeholder hit and block sparks; task 8 replaces them with particles.
 - `src/content/fighters/index.ts` — fighter registry: `FIGHTERS`, `FIGHTER_ORDER`, `FighterId`. Register new fighters here.
 - `src/content/fighters/rei.ts`, `vira.ts` — each fighter's def (stats, 10 moves), look, animations and move visuals. Copy one as the template for a new fighter.

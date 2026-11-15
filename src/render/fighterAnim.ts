@@ -126,7 +126,7 @@ export class FighterAnimator {
     this.blendStep = BLEND_FRAMES;
   }
 
-  update(f: FighterState, def: FighterDef): void {
+  update(f: FighterState, def: FighterDef, weaponHidden = false): void {
     const pick = pickAnimation(f, def);
     const { id, anim } = resolveAnimation(this.anims, pick.id);
     let frame = pick.frame;
@@ -152,6 +152,6 @@ export class FighterAnimator {
       copyPose(this.target, this.out);
     }
 
-    this.view.update({ pose: this.out, x: f.x, y: f.y, facing: f.facing, trail: inActiveFrames(f, def) });
+    this.view.update({ pose: this.out, x: f.x, y: f.y, facing: f.facing, trail: inActiveFrames(f, def), weaponHidden });
   }
 }

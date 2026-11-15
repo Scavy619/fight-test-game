@@ -24,6 +24,8 @@ export interface FighterUpdate {
   facing: 1 | -1;
   /** Record the weapon swoosh this frame (typically the move's active frames). */
   trail: boolean;
+  /** Do not draw the weapon (it is flying as a projectile). */
+  weaponHidden?: boolean;
 }
 
 export interface FighterView {
@@ -81,7 +83,24 @@ const RIBBONS: Record<RibbonStyle, RibbonDef> = {
     along: 47,
     across: -9,
   },
+  shawl: {
+    params: { nodes: 7, seg: 11, gravity: 0.46, damping: 0.9, drift: 0.3, lift: 0, flutter: 0.55 },
+    w0: 15,
+    w1: 24,
+    along: 52,
+    across: -13,
+  },
+  quiver: {
+    params: { nodes: 3, seg: 15, gravity: 0.04, damping: 0.55, drift: 0.05, lift: 0.45, flutter: 0 },
+    w0: 11,
+    w1: 11,
+    along: 36,
+    across: -16,
+  },
 };
+
+/** Ribbons drawn as cloth (secondary glow); the rest are body parts (accent rim). */
+const CLOTH_RIBBONS: ReadonlySet<RibbonStyle> = new Set(['scarf', 'sash', 'shawl', 'quiver']);
 
 const BRAID: ChainParams = { nodes: 7, seg: 7, gravity: 0.45, damping: 0.9, drift: 0.12, lift: 0, flutter: 0.2 };
 const PONYTAIL: ChainParams = { nodes: 6, seg: 6, gravity: 0.2, damping: 0.88, drift: 0.34, lift: 0.08, flutter: 0.4 };
@@ -130,6 +149,7 @@ class FighterViewImpl implements FighterView {
   private y = 0;
   private facing: 1 | -1 = 1;
   private hasState = false;
+  private weaponHidden = false;
 
   // Trail ring buffer: grip position and weapon direction in world space.
   private readonly tgx = new Float64Array(TRAIL_FRAMES + 1);
@@ -174,6 +194,7 @@ class FighterViewImpl implements FighterView {
     this.y = p.y;
     this.facing = p.facing;
     this.hasState = true;
+    this.weaponHidden = p.weaponHidden ?? false;
 
     const r = this.rig;
     const s = r.scale;
@@ -200,7 +221,7 @@ class FighterViewImpl implements FighterView {
     this.tgx[this.thead] = this.wx(r.handF.x);
     this.tgy[this.thead] = this.wy(r.handF.y);
     this.tang[this.thead] = p.facing === 1 ? r.weaponDir : Math.PI - r.weaponDir;
-    this.tlive[this.thead] = p.trail ? 1 : 0;
+    this.tlive[this.thead] = p.trail && !this.weaponHidden ? 1 : 0;
     this.tcount = Math.min(this.tcount + 1, TRAIL_FRAMES + 1);
   }
 
@@ -287,13 +308,15 @@ class FighterViewImpl implements FighterView {
 
     this.drawArm(ctx, sp.shoulderF, sp.elbowF, sp.handF, r.shoulderF, r.elbowF, bulk, false, alpha);
 
-    ctx.save();
-    ctx.translate(this.x, groundY - this.y);
-    ctx.scale(this.facing, -1);
-    ctx.translate(r.weaponBase.x, r.weaponBase.y);
-    ctx.rotate(r.weaponDir);
-    drawWeapon(ctx, this.look.weapon.type, pal, this.look.weapon.length * s, s, alpha);
-    ctx.restore();
+    if (!this.weaponHidden) {
+      ctx.save();
+      ctx.translate(this.x, groundY - this.y);
+      ctx.scale(this.facing, -1);
+      ctx.translate(r.weaponBase.x, r.weaponBase.y);
+      ctx.rotate(r.weaponDir);
+      drawWeapon(ctx, this.look.weapon.type, pal, this.look.weapon.length * s, s, alpha);
+      ctx.restore();
+    }
 
     this.drawHand(ctx, sp.handF, bulk, false, alpha);
     this.drawTrail(ctx, alpha);
@@ -524,7 +547,7 @@ class FighterViewImpl implements FighterView {
     const G = this.gy;
     // Cloth bands (scarf, sash) glow in the secondary colour; tail and cape are body
     // parts with the accent rim.
-    const cloth = this.look.ribbon === 'scarf' || this.look.ribbon === 'sash';
+    const cloth = CLOTH_RIBBONS.has(this.look.ribbon);
     this.bandPath(ctx, c, def.w0 * s, def.w1 * s);
     ctx.globalAlpha = a;
     ctx.fillStyle = pal.body;

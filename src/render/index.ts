@@ -5,13 +5,13 @@ export { pose, key, anim, type PoseSpec } from './pose';
 export { RIG, STAND_Y, WEAPON_SPECS, computeRig, createRigState, solveTwoBone, type RigState } from './rig';
 export { createFighterView, type FighterView, type FighterUpdate } from './fighterView';
 export { baseAnims, BASE_ANIM_IDS, BASE_POSES, GUARD_POSE } from './anims/base';
-export { SAMPLE_LOOKS, REI_LOOK, VIRA_LOOK, WUKONG_LOOK, THOR_LOOK } from './sampleLooks';
+export { ASTRA_LOOKS, SAMPLE_LOOKS, REI_LOOK, VIRA_LOOK, WUKONG_LOOK, THOR_LOOK } from './sampleLooks';
 export { rgba, mixHex, hexToRgb } from './color';
 export {
   pickAnimation, resolveAnimation, inActiveFrames, FighterAnimator, BLEND_FRAMES, WALK_STRIDE_SPEED,
   type AnimPick,
 } from './fighterAnim';
-export { drawStage, GROUND_Y, STAGE_BG, type StageOptions } from './stage';
+export { drawStage, GROUND_Y, STAGE_BG, STAGE_PALETTES, DEFAULT_PALETTE, type StageOptions, type StagePalette } from './stage';
 export {
   HudState, drawHud, announcement, announceScale, timerSeconds, HUD_FONT, P_COLORS,
   type HudInfo, type HudSide, type Announcement,

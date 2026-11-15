@@ -73,9 +73,12 @@ export interface Animation {
 
 export type AnimationSet = Record<string, Animation>;
 
-export type HeadStyle = 'topknot' | 'braid' | 'circlet' | 'wingedHelm';
-export type RibbonStyle = 'scarf' | 'sash' | 'tail' | 'cape';
-export type WeaponType = 'katana' | 'spear' | 'staff' | 'hammer';
+/** `crown`: diadem with sun points; `curls`: bushy hair mass and headband; `hermit`: high bun, forehead mark and long beard. */
+export type HeadStyle = 'topknot' | 'braid' | 'circlet' | 'wingedHelm' | 'crown' | 'curls' | 'hermit';
+/** `shawl`: wide draped cloth from the shoulder; `quiver`: stiff tube on the back (archers). */
+export type RibbonStyle = 'scarf' | 'sash' | 'tail' | 'cape' | 'shawl' | 'quiver';
+/** `bow` is held at its middle (grip 0.5); `mace`, `axe` and `sword` are one-handed. */
+export type WeaponType = 'katana' | 'spear' | 'staff' | 'hammer' | 'bow' | 'mace' | 'axe' | 'sword';
 
 export interface FighterLook {
   /** Neon rim colour, CSS hex `#RRGGBB`. */

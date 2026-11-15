@@ -21,6 +21,9 @@ export function drawHead(
   if (style === 'topknot') topknot(ctx, pal, s, fade);
   if (style === 'circlet') feathers(ctx, pal, s, fade);
   if (style === 'wingedHelm') wing(ctx, pal, s, fade, true);
+  if (style === 'crown') sunRays(ctx, pal, s, fade);
+  if (style === 'curls') curls(ctx, pal, s, fade);
+  if (style === 'hermit') bun(ctx, pal, s, fade);
 
   // Skull: slightly pointed chin toward the face.
   ctx.beginPath();
@@ -41,11 +44,122 @@ export function drawHead(
 
   visor(ctx, pal, s, fade);
 
-  if (style === 'braid' || style === 'circlet') band(ctx, pal, s, fade, style === 'circlet');
+  if (style === 'braid' || style === 'circlet' || style === 'curls') band(ctx, pal, s, fade, style === 'circlet');
   if (style === 'wingedHelm') {
     wing(ctx, pal, s, fade, false);
     beard(ctx, pal, s, fade);
   }
+  if (style === 'crown') diadem(ctx, pal, s, fade);
+  if (style === 'hermit') {
+    mark(ctx, pal, s, fade);
+    longBeard(ctx, pal, s, fade);
+  }
+}
+
+/** Crown: short sun points fanned over the top of the head (behind the skull). */
+function sunRays(ctx: CanvasRenderingContext2D, pal: Palette, s: number, fade: number): void {
+  ctx.globalAlpha = fade;
+  for (let k = -2; k <= 2; k++) {
+    const a = Math.PI / 2 + k * 0.42;
+    const bx = Math.cos(a) * 10 * s;
+    const by = Math.sin(a) * 11 * s;
+    const tx = Math.cos(a) * (19 - Math.abs(k) * 2) * s;
+    const ty = Math.sin(a) * (20 - Math.abs(k) * 2) * s;
+    const px = -Math.sin(a) * 2.6 * s;
+    const py = Math.cos(a) * 2.6 * s;
+    ctx.beginPath();
+    ctx.moveTo(bx + px, by + py);
+    ctx.lineTo(tx, ty);
+    ctx.lineTo(bx - px, by - py);
+    ctx.closePath();
+    paintPart(ctx, pal, false, fade, pal.secondary, pal.secGlow);
+  }
+}
+
+/** Crown: the band itself with a central disc, in front. */
+function diadem(ctx: CanvasRenderingContext2D, pal: Palette, s: number, fade: number): void {
+  ctx.globalAlpha = fade;
+  ctx.beginPath();
+  ctx.moveTo(-11 * s, 5 * s);
+  ctx.quadraticCurveTo(0, 9 * s, 11.5 * s, 6 * s);
+  ctx.strokeStyle = pal.secGlow;
+  ctx.lineWidth = 7;
+  ctx.stroke();
+  ctx.strokeStyle = pal.secondary;
+  ctx.lineWidth = 2.8;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(7 * s, 7.5 * s, 2.8 * s, 0, Math.PI * 2);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fill();
+}
+
+/** Curls: a bushy lobed mass around the back and top of the head. */
+function curls(ctx: CanvasRenderingContext2D, pal: Palette, s: number, fade: number): void {
+  const lobes: [number, number, number][] = [
+    [-9, 10, 7.5], [-14, 2, 7], [-13, -7, 6], [-2, 15, 7], [5, 13, 6], [-8, -14, 5.5],
+  ];
+  for (const [x, y, r] of lobes) {
+    ctx.beginPath();
+    ctx.arc(x * s, y * s, r * s, 0, Math.PI * 2);
+    paintPart(ctx, pal, false, fade);
+  }
+}
+
+/** Hermit: tied hair bun high at the back. */
+function bun(ctx: CanvasRenderingContext2D, pal: Palette, s: number, fade: number): void {
+  ctx.beginPath();
+  ctx.moveTo(3 * s, 13 * s);
+  ctx.quadraticCurveTo(-4 * s, 18 * s, -9 * s, 15 * s);
+  ctx.lineTo(-12 * s, 6 * s);
+  ctx.lineTo(-6 * s, 2 * s);
+  ctx.closePath();
+  paintPart(ctx, pal, false, fade);
+  ctx.beginPath();
+  ctx.arc(-6 * s, 19 * s, 5.5 * s, 0, Math.PI * 2);
+  paintPart(ctx, pal, false, fade);
+  ctx.beginPath();
+  ctx.moveTo(-10 * s, 15.5 * s);
+  ctx.lineTo(-2 * s, 16.5 * s);
+  ctx.strokeStyle = pal.secGlow;
+  ctx.lineWidth = 5;
+  ctx.stroke();
+  ctx.strokeStyle = pal.secondary;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+/** Hermit: a small vertical forehead mark. */
+function mark(ctx: CanvasRenderingContext2D, pal: Palette, s: number, fade: number): void {
+  ctx.globalAlpha = fade;
+  ctx.beginPath();
+  ctx.moveTo(9.5 * s, 4.5 * s);
+  ctx.lineTo(10.5 * s, 9.5 * s);
+  ctx.strokeStyle = pal.secGlow;
+  ctx.lineWidth = 5;
+  ctx.stroke();
+  ctx.strokeStyle = pal.secondary;
+  ctx.lineWidth = 1.8;
+  ctx.stroke();
+}
+
+/** Hermit: long pointed beard hanging from the jaw. */
+function longBeard(ctx: CanvasRenderingContext2D, pal: Palette, s: number, fade: number): void {
+  ctx.beginPath();
+  ctx.moveTo(-5 * s, -6 * s);
+  ctx.lineTo(11 * s, -4 * s);
+  ctx.quadraticCurveTo(12 * s, -16 * s, 6 * s, -28 * s);
+  ctx.quadraticCurveTo(0, -20 * s, -3 * s, -14 * s);
+  ctx.closePath();
+  paintPart(ctx, pal, false, fade, pal.secondary, pal.secGlow);
+  ctx.beginPath();
+  ctx.moveTo(3 * s, -8 * s);
+  ctx.lineTo(5.5 * s, -22 * s);
+  ctx.moveTo(8 * s, -7 * s);
+  ctx.lineTo(8 * s, -18 * s);
+  ctx.strokeStyle = pal.secGlow;
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
 }
 
 function visor(ctx: CanvasRenderingContext2D, pal: Palette, s: number, fade: number): void {

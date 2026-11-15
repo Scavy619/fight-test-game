@@ -40,6 +40,10 @@ export const WEAPON_SPECS: Record<WeaponType, WeaponSpec> = {
   spear: { grip: 0.36, twoHandGap: 36, trailInner: 0.6 },
   staff: { grip: 0.42, twoHandGap: 34, trailInner: 0.62 },
   hammer: { grip: 0.14, twoHandGap: 0, trailInner: 0.62 },
+  bow: { grip: 0.5, twoHandGap: 0, trailInner: 0.5 },
+  mace: { grip: 0.12, twoHandGap: 0, trailInner: 0.62 },
+  axe: { grip: 0.15, twoHandGap: 0, trailInner: 0.6 },
+  sword: { grip: 0.1, twoHandGap: 0, trailInner: 0.34 },
 };
 
 /**

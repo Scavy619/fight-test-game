@@ -1,16 +1,19 @@
 // The fight: one sim match, two animated fighters, placeholder arena, HUD and
 // visual-only feedback (shake, flash, sparks) driven by sim events.
 import type { GameContext, Scene } from '../engine';
-import type { FighterEntry } from '../content/types';
+import type { FighterEntry, HeroEntry } from '../content/types';
+import { samplePose } from '../render/anim';
 import { baseAnims } from '../render/anims/base';
-import { rgba } from '../render/color';
 import { FighterAnimator } from '../render/fighterAnim';
 import { createFighterView } from '../render/fighterView';
 import { drawControlsStrip } from '../render/controlsHelp';
 import { HudState, drawHud, type HudInfo } from '../render/hud';
 import { MoveVisuals } from '../render/moveVisuals';
+import { drawProjectile } from '../render/projectileView';
 import { Sparks } from '../render/sparks';
-import { GROUND_Y, drawStage } from '../render/stage';
+import { DEFAULT_PALETTE, GROUND_Y, drawStage, type StagePalette } from '../render/stage';
+import { drawStatusLabels } from '../render/statusLabels';
+import { drawDecoyOutline, drawZones } from '../render/zoneView';
 import {
   bodyRect,
   createMatch,
@@ -45,6 +48,8 @@ export interface FightConfig {
   solo?: boolean;
   /** Hide the controls strip above the meters (default shown). */
   hideControls?: boolean;
+  /** Stage colours (chapter or mode); default is the neon palette. */
+  palette?: StagePalette;
   /** Drawn last, over the HUD (the solo action bar). */
   overlay?: (ctx: CanvasRenderingContext2D, match: Match) => void;
 }
@@ -66,10 +71,8 @@ export function createFightScene(game: GameContext, config: FightConfig): Scene 
   const animators = PLAYERS.map(
     (i) => new FighterAnimator(createFighterView(entries[i].look), { ...baseAnims, ...entries[i].anims }),
   ) as [FighterAnimator, FighterAnimator];
-  const orb = PLAYERS.map((i) => ({
-    glow: rgba(accents[i], 0.18),
-    mid: rgba(accents[i], 0.55),
-  }));
+  const heroes = entries as unknown as readonly [Partial<HeroEntry>, Partial<HeroEntry>];
+  const decoyViews = PLAYERS.map((i) => createFighterView(entries[i].look));
   const info: HudInfo = {
     names: [defs[0].name, defs[1].name],
     accents,
@@ -136,6 +139,13 @@ export function createFightScene(game: GameContext, config: FightConfig): Scene 
     }
   }
 
+  /** True while a hideWeaponWhileProjectile move's projectile is live (a thrown axe). */
+  function weaponHidden(i: PlayerIndex): boolean {
+    const slots = heroes[i].hideWeaponWhileProjectile;
+    if (!slots) return false;
+    return match.state.projectiles.some((p) => p.owner === i && slots.includes(p.slot));
+  }
+
   function inputFor(i: PlayerIndex): InputFrame {
     const c = config.controllers?.[i];
     return c ? c(match, i) : game.input.frames[i];
@@ -189,7 +199,7 @@ export function createFightScene(game: GameContext, config: FightConfig): Scene 
 
     const st = match.state;
     // Frozen fighters keep their last pose (no blend, ribbon or trail advance).
-    for (const i of PLAYERS) if (advanced[i]) animators[i].update(st.fighters[i], defs[i]);
+    for (const i of PLAYERS) if (advanced[i]) animators[i].update(st.fighters[i], defs[i], weaponHidden(i));
     hud.update(st.fighters);
     sparks.update();
     // Move visuals belong to the frozen world: they hold during hitstop.
@@ -207,36 +217,23 @@ export function createFightScene(game: GameContext, config: FightConfig): Scene 
   }
 
   function drawProjectiles(ctx: CanvasRenderingContext2D): void {
-    const ps = match.state.projectiles;
-    if (ps.length === 0) return;
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    for (const p of ps) {
-      const c = orb[p.owner];
-      if (!c) continue;
-      const x = p.x;
-      const y = GROUND_Y - p.y;
-      const rx = p.w / 2;
-      const ry = p.h / 2;
-      const wob = 1 + 0.08 * Math.sin(p.age * 0.6);
-      ctx.fillStyle = c.glow;
-      ctx.beginPath();
-      ctx.ellipse(x, y, rx * 1.5 * wob, ry * 1.5 * wob, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = c.mid;
-      ctx.beginPath();
-      ctx.ellipse(x, y, rx * wob, ry * wob, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = accents[p.owner];
-      ctx.beginPath();
-      ctx.ellipse(x, y, rx * 0.6, ry * 0.6, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#FFFFFF';
-      ctx.beginPath();
-      ctx.ellipse(x, y, rx * 0.3, ry * 0.3, 0, 0, Math.PI * 2);
-      ctx.fill();
+    for (const p of match.state.projectiles) {
+      drawProjectile(ctx, p, heroes[p.owner].projectiles?.[p.slot], accents[p.owner], GROUND_Y);
     }
-    ctx.restore();
+  }
+
+  /** Decoys: the owner's rig at idle, faded, standing where the zone is. */
+  function drawDecoys(ctx: CanvasRenderingContext2D): void {
+    for (const z of match.state.zones) {
+      if (z.kind !== 'decoy') continue;
+      const owner = match.state.fighters[z.owner];
+      const view = decoyViews[z.owner];
+      const idle = entries[z.owner].anims.idle ?? baseAnims.idle;
+      if (!view || !idle) continue;
+      view.update({ pose: samplePose(idle, match.state.frame % 60), x: z.x, y: 0, facing: owner.facing, trail: false });
+      view.draw(ctx, GROUND_Y, 0.45);
+      drawDecoyOutline(ctx, z, accents[z.owner], GROUND_Y, match.state.frame);
+    }
   }
 
   function rectPath(ctx: CanvasRenderingContext2D, r: Rect): void {
@@ -312,7 +309,7 @@ export function createFightScene(game: GameContext, config: FightConfig): Scene 
     const h = game.height;
     ctx.save();
     ctx.translate(shakeX, shakeY);
-    drawStage(ctx, w, h, GROUND_Y);
+    drawStage(ctx, w, h, GROUND_Y, { palette: config.palette ?? DEFAULT_PALETTE });
     if (s.superFreeze) {
       ctx.fillStyle = FREEZE_DIM;
       ctx.fillRect(-w, -h, w * 3, h * 3);
@@ -323,9 +320,12 @@ export function createFightScene(game: GameContext, config: FightConfig): Scene 
     if (s.superFreeze) top = s.superFreeze.caster;
     else if (f0.state === 'attack' && f1.state !== 'attack') top = 0;
     const bottom: PlayerIndex = top === 0 ? 1 : 0;
+    drawZones(ctx, s.zones, accents, GROUND_Y, s.frame);
+    drawDecoys(ctx);
     animators[bottom].view.draw(ctx, GROUND_Y);
     animators[top].view.draw(ctx, GROUND_Y);
     visuals.draw(ctx, GROUND_Y);
+    for (const i of PLAYERS) drawStatusLabels(ctx, s.fighters[i], defs[i], accents[i], GROUND_Y);
     drawProjectiles(ctx);
     sparks.draw(ctx, GROUND_Y);
     if (debugBoxes) drawDebug(ctx);

@@ -27,7 +27,186 @@ export function drawWeapon(
     case 'hammer':
       drawHammer(ctx, pal, L, s, fade);
       break;
+    case 'bow':
+      drawBow(ctx, pal, L, s, fade);
+      break;
+    case 'mace':
+      drawMace(ctx, pal, L, s, fade);
+      break;
+    case 'axe':
+      drawAxe(ctx, pal, L, s, fade);
+      break;
+    case 'sword':
+      drawSword(ctx, pal, L, s, fade);
+      break;
   }
+}
+
+/** Recurve bow held at its middle: limbs bow toward -y, the string is the chord on +y. */
+function drawBow(ctx: CanvasRenderingContext2D, pal: Palette, L: number, s: number, fade: number): void {
+  const bend = 0.17 * L;
+  ctx.globalAlpha = fade;
+  // String.
+  ctx.beginPath();
+  ctx.moveTo(0.02 * L, 1.5 * s);
+  ctx.lineTo(0.98 * L, 1.5 * s);
+  ctx.strokeStyle = pal.weaponCore;
+  ctx.lineWidth = 0.9;
+  ctx.stroke();
+  // Limbs: one curve, recurving at both tips.
+  ctx.beginPath();
+  ctx.moveTo(0, 2 * s);
+  ctx.quadraticCurveTo(0.08 * L, -0.25 * bend, 0.2 * L, -0.6 * bend);
+  ctx.quadraticCurveTo(0.5 * L, -1.15 * bend, 0.8 * L, -0.6 * bend);
+  ctx.quadraticCurveTo(0.92 * L, -0.25 * bend, L, 2 * s);
+  ctx.strokeStyle = pal.weaponGlow;
+  ctx.lineWidth = 3.2 * s + 6;
+  ctx.stroke();
+  ctx.strokeStyle = pal.weaponFill;
+  ctx.lineWidth = 3.2 * s;
+  ctx.stroke();
+  ctx.strokeStyle = pal.weapon;
+  ctx.lineWidth = 1.3;
+  ctx.stroke();
+  // Grip wrap at the middle, with a bright core.
+  ctx.beginPath();
+  ctx.rect(0.43 * L, -0.95 * bend - 2.6 * s, 0.14 * L, 5.2 * s);
+  paintPart(ctx, pal, false, fade, pal.secondary, pal.secGlow);
+  ctx.beginPath();
+  ctx.moveTo(0.46 * L, -0.95 * bend);
+  ctx.lineTo(0.54 * L, -0.95 * bend);
+  ctx.strokeStyle = pal.weaponCore;
+  ctx.lineWidth = 1.4;
+  ctx.stroke();
+  // Nock caps.
+  for (const x of [0.01 * L, 0.99 * L]) {
+    ctx.beginPath();
+    ctx.arc(x, 1.2 * s, 2.2 * s, 0, Math.PI * 2);
+    ctx.fillStyle = pal.secondary;
+    ctx.fill();
+  }
+}
+
+/** Gada: shaft, collar and a large ribbed spherical head. */
+function drawMace(ctx: CanvasRenderingContext2D, pal: Palette, L: number, s: number, fade: number): void {
+  const r = 0.17 * L;
+  const cx = L - r;
+  shaft(ctx, pal, 0, cx - r * 0.7, 2.9 * s, fade);
+  // Pommel disc.
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 2.2 * s, 5 * s, 0, 0, Math.PI * 2);
+  paintPart(ctx, pal, false, fade, pal.secondary, pal.secGlow, false);
+  // Collar.
+  ctx.beginPath();
+  ctx.rect(cx - r - 3 * s, -4 * s, 5 * s, 8 * s);
+  paintPart(ctx, pal, false, fade, pal.secondary, pal.secGlow, false);
+  // Head.
+  ctx.beginPath();
+  ctx.arc(cx, 0, r, 0, Math.PI * 2);
+  paintPart(ctx, pal, false, fade, pal.weapon, pal.weaponGlow);
+  ctx.globalAlpha = fade;
+  ctx.fillStyle = pal.weaponFill;
+  ctx.beginPath();
+  ctx.arc(cx, 0, r * 0.82, 0, Math.PI * 2);
+  ctx.fill();
+  // Ribs: three ellipses of decreasing width.
+  ctx.strokeStyle = pal.weaponCore;
+  ctx.lineWidth = 1.2;
+  for (const f of [0.25, 0.6]) {
+    ctx.beginPath();
+    ctx.ellipse(cx, 0, r * f, r * 0.82, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.moveTo(cx - r * 0.82, 0);
+  ctx.lineTo(cx + r * 0.82, 0);
+  ctx.stroke();
+  // Crown nub at the far end.
+  ctx.beginPath();
+  ctx.arc(L - 1.5 * s, 0, 2.6 * s, 0, Math.PI * 2);
+  ctx.fillStyle = pal.secondary;
+  ctx.fill();
+}
+
+/** Parashu: long haft, single crescent bit on +y, a short spike on -y. */
+function drawAxe(ctx: CanvasRenderingContext2D, pal: Palette, L: number, s: number, fade: number): void {
+  shaft(ctx, pal, 0, L - 2 * s, 2.7 * s, fade);
+  ctx.beginPath();
+  ctx.arc(-1 * s, 0, 3.4 * s, 0, Math.PI * 2);
+  paintPart(ctx, pal, false, fade, pal.secondary, pal.secGlow, false);
+  // Socket.
+  const a = 0.7 * L;
+  ctx.beginPath();
+  ctx.rect(a, -5 * s, 0.26 * L, 10 * s);
+  paintPart(ctx, pal, false, fade, pal.secondary, pal.secGlow, false);
+  // Crescent bit.
+  const reach = 22 * s;
+  ctx.beginPath();
+  ctx.moveTo(a + 1 * s, 4 * s);
+  ctx.quadraticCurveTo(a + 0.02 * L, reach * 0.55, a + 0.1 * L, reach);
+  ctx.quadraticCurveTo(a + 0.2 * L, reach * 1.08, L + 2 * s, reach * 0.9);
+  ctx.quadraticCurveTo(L - 1 * s, reach * 0.4, L - 1 * s, 4 * s);
+  ctx.closePath();
+  ctx.globalAlpha = fade;
+  ctx.fillStyle = pal.weaponFill;
+  ctx.fill();
+  glowLine(ctx, pal.weapon, pal.weaponGlow, 1.5, fade);
+  // Cutting edge highlight along the outer arc.
+  ctx.beginPath();
+  ctx.moveTo(a + 0.1 * L, reach - 1.5 * s);
+  ctx.quadraticCurveTo(a + 0.2 * L, reach * 1.02, L + 0.5 * s, reach * 0.88);
+  ctx.strokeStyle = pal.weaponCore;
+  ctx.lineWidth = 1.6;
+  ctx.stroke();
+  // Back spike.
+  ctx.beginPath();
+  ctx.moveTo(a + 0.05 * L, -4 * s);
+  ctx.lineTo(a + 0.13 * L, -11 * s);
+  ctx.lineTo(a + 0.2 * L, -4 * s);
+  ctx.closePath();
+  paintPart(ctx, pal, false, fade, pal.weapon, pal.weaponGlow);
+}
+
+/** Straight double-edged sword: pommel, wrapped grip, crossguard, tapered blade. */
+function drawSword(ctx: CanvasRenderingContext2D, pal: Palette, L: number, s: number, fade: number): void {
+  const guard = 0.2 * L;
+  const x0 = 0.22 * L;
+  const hw = 3.1 * s;
+  shaft(ctx, pal, 0.04 * L, guard, 2.5 * s, fade);
+  ctx.strokeStyle = pal.secSoft;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let x = 0.06 * L; x < guard - 2 * s; x += 4.5 * s) {
+    ctx.moveTo(x, -2.2 * s);
+    ctx.lineTo(x + 2 * s, 2.2 * s);
+  }
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0.02 * L, 0, 3.2 * s, 0, Math.PI * 2);
+  paintPart(ctx, pal, false, fade, pal.secondary, pal.secGlow, false);
+  // Blade.
+  const taper = 0.86;
+  ctx.beginPath();
+  ctx.moveTo(x0, -hw);
+  ctx.lineTo(x0 + (L - x0) * taper, -hw);
+  ctx.lineTo(L, 0);
+  ctx.lineTo(x0 + (L - x0) * taper, hw);
+  ctx.lineTo(x0, hw);
+  ctx.closePath();
+  ctx.globalAlpha = fade;
+  ctx.fillStyle = pal.weaponFill;
+  ctx.fill();
+  glowLine(ctx, pal.weapon, pal.weaponGlow, 1.4, fade);
+  ctx.beginPath();
+  ctx.moveTo(x0 + 2 * s, 0);
+  ctx.lineTo(L - 3 * s, 0);
+  ctx.strokeStyle = pal.weaponCore;
+  ctx.lineWidth = 1.3;
+  ctx.stroke();
+  // Crossguard.
+  ctx.beginPath();
+  ctx.rect(guard - 1.5 * s, -9.5 * s, 3.4 * s, 19 * s);
+  paintPart(ctx, pal, false, fade, pal.secondary, pal.secGlow);
 }
 
 function glowLine(

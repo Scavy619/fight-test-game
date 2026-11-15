@@ -7,8 +7,8 @@ import { setupCanvas } from './engine/canvas';
 import { animDuration, createPose, samplePose } from './render/anim';
 import { BASE_ANIM_IDS, baseAnims } from './render/anims/base';
 import { createFighterView } from './render/fighterView';
-import { SAMPLE_LOOKS } from './render/sampleLooks';
-import { drawStage } from './render/stage';
+import { ASTRA_LOOKS, SAMPLE_LOOKS } from './render/sampleLooks';
+import { DEFAULT_PALETTE, drawStage } from './render/stage';
 
 const GROUND_Y = 600;
 const STEP = 1000 / 60;
@@ -24,10 +24,13 @@ const canvas = document.getElementById('gallery');
 if (!(canvas instanceof HTMLCanvasElement)) throw new Error('Missing #gallery canvas');
 const { ctx, width, height } = setupCanvas(canvas);
 
-const fighters = SAMPLE_LOOKS.map((s, i) => ({
+// `?set=astra` shows the eight ASTRA draft looks instead of the four prototype ones.
+const set = new URLSearchParams(window.location.search).get('set') === 'astra' ? ASTRA_LOOKS : SAMPLE_LOOKS;
+const spacing = (width - 160) / set.length;
+const fighters = set.map((s, i) => ({
   name: s.name,
   view: createFighterView(s.look),
-  baseX: 200 + i * 293,
+  baseX: 80 + spacing / 2 + i * spacing,
 }));
 const pose = createPose();
 
@@ -158,7 +161,7 @@ function tick(now: number): void {
     ctx.scale(zoom, zoom);
     ctx.translate(-fx, -(GROUND_Y - 100));
   }
-  drawStage(ctx, width, height, GROUND_Y, { lineColor: '#3DA9FF', lineAlpha: 1 });
+  drawStage(ctx, width, height, GROUND_Y, { palette: { ...DEFAULT_PALETTE, line: '#3DA9FF' }, lineAlpha: 1 });
   for (const f of fighters) f.view.draw(ctx, GROUND_Y);
   ctx.restore();
   drawHud();
