@@ -12,6 +12,8 @@ export interface CampaignSave {
   completed: number[];
   /** Choice id -> option id. */
   choices: Record<string, string>;
+  /** 0-based step of the current chapter to resume at (0 = the chapter intro). */
+  step: number;
   /** Chapter order after reorder effects, or null for the default order. */
   chapterOrder: number[] | null;
 }
@@ -37,7 +39,7 @@ export function defaultSave(): SaveData {
   return {
     version: SAVE_VERSION,
     unlocked: [],
-    campaign: { current: 1, completed: [], choices: {}, chapterOrder: null },
+    campaign: { current: 1, completed: [], choices: {}, step: 0, chapterOrder: null },
     arcade: {},
     seenControls: false,
     settings: { difficulty: 'normal' },
@@ -81,6 +83,7 @@ export function withDefaults(raw: unknown): SaveData {
       current: Number.isInteger(c.current) && (c.current as number) >= 1 ? (c.current as number) : 1,
       completed: [...new Set(numberArray(c.completed))].sort((a, b) => a - b),
       choices,
+      step: Number.isInteger(c.step) && (c.step as number) >= 0 ? (c.step as number) : 0,
       chapterOrder: order.length > 0 ? order : null,
     },
     arcade,

@@ -18,13 +18,13 @@ describe('withDefaults', () => {
     const repaired = withDefaults({
       version: 1,
       unlocked: ['arjuna', 7, 'arjuna', 'bhima'],
-      campaign: { current: 3, completed: [1, 2, 2, -4, 'x'], choices: { c2: 'talk', bad: 3 }, chapterOrder: [] },
+      campaign: { current: 3, completed: [1, 2, 2, -4, 'x'], choices: { c2: 'talk', bad: 3 }, step: 4, chapterOrder: [] },
       arcade: { arjuna: true, bhima: 'yes' },
       seenControls: 'true',
       settings: { difficulty: 'nightmare' },
     });
     expect(repaired.unlocked).toEqual(['arjuna', 'bhima']);
-    expect(repaired.campaign).toEqual({ current: 3, completed: [1, 2], choices: { c2: 'talk' }, chapterOrder: null });
+    expect(repaired.campaign).toEqual({ current: 3, completed: [1, 2], choices: { c2: 'talk' }, step: 4, chapterOrder: null });
     expect(repaired.arcade).toEqual({ arjuna: true });
     expect(repaired.seenControls).toBe(false);
     expect(repaired.settings.difficulty).toBe('normal');

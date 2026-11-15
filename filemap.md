@@ -72,6 +72,7 @@
 - `src/content/heroKit.ts` — authoring helpers: `tipBox` and `weaponPoints` (hitboxes and projectile spawns from the strike pose), `attackAnim`, `idleAnim`, `walkKeys`, `info`, shared cancel lists.
 - `src/content/roster.ts` — the full eight-hero roster (names, titles, unlock text) the select screen shows, including heroes not written yet.
 - `src/content/heroes/heroes.test.ts` — tests every hero must pass (validation, animation lengths, weapon tip versus hitbox, projectile spawns, walk stride, grab and power rules, profile completeness, lore). `combos.test.ts`: random combo bounds over every pairing. `chains.test.ts`: light, light, heavy as one combo and the ultimate trigger.
+- `src/scenes/campaign.ts` — story campaign scenes; `src/scenes/dialogue.ts` — dialogue box scene; `src/content/campaign.ts` — the eight chapters and pure step resolution (`campaign.test.ts`).
 - `src/scenes/arcade.ts` — Arcade: hero pick, ladder fights, continue and ending cards, saves the clear and grants unlocks.
 - `src/scenes/card.ts` — `createCard`: heading, progress dots, portraits, wrapped text and choices (Arcade now, the campaign later).
 - `src/content/unlocks.ts` — `UNLOCK_RULES`, `unlocksFor`, `grantUnlocks`; `src/content/arcade.ts` — `ARCADE_RIVALS`, `buildLadder`, `ARCADE_ENDINGS`; `src/content/unlocks.test.ts` tests both.

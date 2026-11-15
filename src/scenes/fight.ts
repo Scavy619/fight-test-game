@@ -58,6 +58,8 @@ export interface FightConfig {
   hideControls?: boolean;
   /** Stage colours (chapter or mode); default is the neon palette. */
   palette?: StagePalette;
+  /** Meter each side starts the match with (a campaign reward). */
+  startMeter?: [number, number];
   /** Arcade and campaign: no rematch or back-out at match end; `onMatchEnd` takes over. */
   noRematch?: boolean;
   /** Called once, about a second and a half after the match ends, with the winner. */
@@ -112,12 +114,14 @@ export function createFightScene(game: GameContext, config: FightConfig): Scene 
   let endFrames = 0;
 
   function newMatch(): Match {
-    return createMatch({
+    const m = createMatch({
       fighters: [defs[0], defs[1]],
       roundsToWin: config.roundsToWin,
       roundSeconds: config.roundSeconds,
       damageScale: config.damageScale,
     });
+    if (config.startMeter) for (const i of PLAYERS) m.state.fighters[i].meter = config.startMeter[i];
+    return m;
   }
 
   function resetTransients(): void {

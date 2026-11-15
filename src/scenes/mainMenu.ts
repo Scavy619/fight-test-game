@@ -10,6 +10,7 @@ import { createControlsScreen, withControlsGate } from './controlsScreen';
 import { createFightScene } from './fight';
 import { createGalleryScene } from './gallery';
 import { startArcade } from './arcade';
+import { startCampaign } from './campaign';
 import { startPractice } from './practice';
 import { createSoloHuman } from './soloControls';
 import { ListMenu, MENU_CYAN, MENU_DIM, MENU_TEXT, drawMenuBackdrop, drawNotice, drawTitle, type ListItem } from './listMenu';
@@ -114,7 +115,7 @@ type MenuId = 'campaign' | 'arcade' | 'cpu' | 'versus' | 'practice' | 'gallery' 
 type CpuId = 'easy' | 'normal' | 'hard' | 'back';
 
 const MAIN_ITEMS: ListItem[] = [
-  { id: 'campaign', label: 'STORY CAMPAIGN', hint: 'Eight chapters, choices and saves. Arrives with slice A8.', enabled: false },
+  { id: 'campaign', label: 'STORY CAMPAIGN', hint: 'Eight chapters, choices and saves: the story of the Hollow Astra.' },
   { id: 'arcade', label: 'ARCADE', hint: 'Climb a ladder of opponents to your rival and see the ending for your hero.' },
   { id: 'cpu', label: 'VERSUS CPU', hint: 'One match against the computer at easy, normal or hard. Keyboard, mouse or pad.' },
   { id: 'versus', label: 'TWO PLAYERS', hint: 'Two players on one keyboard or two pads.' },
@@ -148,6 +149,7 @@ export function createMainMenuScene(game: GameContext, remember: Mode | null = n
       const picked = main.update() as MenuId | 'back' | null;
       if (picked === 'cpu') page = 'cpu';
       else if (picked === 'versus') chooseHeroes(game, 'versus');
+      else if (picked === 'campaign') startCampaign(game, () => game.scenes.set(createMainMenuScene(game, null, 'campaign')));
       else if (picked === 'arcade') startArcade(game, () => game.scenes.set(createMainMenuScene(game, null, 'arcade')));
       else if (picked === 'practice') {
         const toMenu = (): void => game.scenes.set(createMainMenuScene(game, null, 'practice'));
