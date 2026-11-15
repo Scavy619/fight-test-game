@@ -6,9 +6,10 @@ import { HEROES, type HeroId } from '../content/heroes';
 import type { GameContext, Scene } from '../engine';
 import { HUD_FONT, P_COLORS } from '../render/hud';
 import { createCharSelect } from './charSelect';
-import { createControlsScreen } from './controlsScreen';
+import { createControlsScreen, withControlsGate } from './controlsScreen';
 import { createFightScene } from './fight';
 import { createGalleryScene } from './gallery';
+import { startArcade } from './arcade';
 import { startPractice } from './practice';
 import { createSoloHuman } from './soloControls';
 import { ListMenu, MENU_CYAN, MENU_DIM, MENU_TEXT, drawMenuBackdrop, drawNotice, drawTitle, type ListItem } from './listMenu';
@@ -20,12 +21,6 @@ export const MODES: readonly Mode[] = ['versus', 'easy', 'normal', 'hard'];
 
 export function isMode(v: string | null): v is Mode {
   return v !== null && (MODES as readonly string[]).includes(v);
-}
-
-/** Shows the controls screen first when the player has never seen it, then runs `start`. */
-function withControlsGate(game: GameContext, solo: boolean, start: () => void): void {
-  if (game.save.data.seenControls) return start();
-  game.scenes.set(createControlsScreen(game, { solo, onDone: start }));
 }
 
 export interface MatchSetup {
@@ -120,7 +115,7 @@ type CpuId = 'easy' | 'normal' | 'hard' | 'back';
 
 const MAIN_ITEMS: ListItem[] = [
   { id: 'campaign', label: 'STORY CAMPAIGN', hint: 'Eight chapters, choices and saves. Arrives with slice A8.', enabled: false },
-  { id: 'arcade', label: 'ARCADE', hint: 'A ladder of opponents ending in your rival. Arrives with slice A6.', enabled: false },
+  { id: 'arcade', label: 'ARCADE', hint: 'Climb a ladder of opponents to your rival and see the ending for your hero.' },
   { id: 'cpu', label: 'VERSUS CPU', hint: 'One match against the computer at easy, normal or hard. Keyboard, mouse or pad.' },
   { id: 'versus', label: 'TWO PLAYERS', hint: 'Two players on one keyboard or two pads.' },
   { id: 'practice', label: 'PRACTICE', hint: 'Train against a dummy: reset, refill and a live move list.' },
@@ -153,6 +148,7 @@ export function createMainMenuScene(game: GameContext, remember: Mode | null = n
       const picked = main.update() as MenuId | 'back' | null;
       if (picked === 'cpu') page = 'cpu';
       else if (picked === 'versus') chooseHeroes(game, 'versus');
+      else if (picked === 'arcade') startArcade(game, () => game.scenes.set(createMainMenuScene(game, null, 'arcade')));
       else if (picked === 'practice') {
         const toMenu = (): void => game.scenes.set(createMainMenuScene(game, null, 'practice'));
         pickHeroes(game, {

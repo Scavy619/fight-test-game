@@ -93,4 +93,40 @@ export const HERO_LORE: Record<string, LoreEntry> = {
       { label: 'Mahabharata (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Mahabharata' },
     ],
   },
+  karna: {
+    id: 'karna',
+    name: 'Karna',
+    tagline: 'The Sun’s Chosen',
+    tradition: [
+      'Karna is a central warrior of the Mahabharata. Born to Kunti before her marriage, he is raised by a charioteer’s family and is refused instruction by Drona because of his upbringing. He becomes a master archer and a loyal friend of Duryodhana, who makes him king of Anga, and he fights for Duryodhana’s side at Kurukshetra, where he faces his half-brother Arjuna.',
+      'He is remembered for his generosity, for the natural armour and earrings in some tellings, and for the pain of a life spent without recognition. Details of his birth, teachers and death differ between tellings and regions.',
+    ],
+    inThisGame: [
+      'Our Karna is proud, generous and burdened. At dawn he stands between a threatened village and the force pursuing him; a promise to one side pulls against his instinct to protect the people in front of him, and he chooses the village.',
+      'His rivalry with Arjuna is given emotional weight: the player is meant to understand his motives, not only his strength. The armour of this game is a technique, Radiant Armor, that takes one small blow and never a large one.',
+    ],
+    sources: [
+      { label: 'Karna (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Karna' },
+      { label: 'Mahabharata (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Mahabharata' },
+      { label: 'Kurukshetra War (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Kurukshetra_War' },
+    ],
+  },
+  ghatotkacha: {
+    id: 'ghatotkacha',
+    name: 'Ghatotkacha',
+    tagline: 'The Night-Born Guardian',
+    tradition: [
+      'Ghatotkacha is the son of Bhima and the rakshasi Hidimbi in the Mahabharata, a powerful ally of the Pandavas who commands illusion and is said to be strongest at night. At Kurukshetra he fights fiercely for his father’s side and his death turns the course of a night battle.',
+      'Tellings differ on the details of his birth and of his death. Rakshasas in these texts are not simply monsters, and his loyalty to family is a constant theme.',
+    ],
+    inThisGame: [
+      'Our Ghatotkacha is a tall, gentle guardian whose unusual abilities have made others wary. Under a moonlit sky he shields forest families while illusions draw their pursuers away.',
+      'His appearance is never a source of fear or mockery. His chapter explores family, sacrifice and the price of turning the tide for others; his death is not shown.',
+    ],
+    sources: [
+      { label: 'Ghatotkacha (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Ghatotkacha' },
+      { label: 'Hidimbi (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Hidimbi' },
+      { label: 'Mahabharata (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Mahabharata' },
+    ],
+  },
 };

@@ -33,7 +33,7 @@ The user replaced the phase-1 roster and scope with the ASTRA brief (eight heroe
 | A3 | Render kit: bow, mace, axe, sword; new head and ribbon styles; projectile looks; zone and decoy drawing; status labels; procedural portraits; stage palettes | done |
 | A4 | Heroes Arjuna and Bhima; remove Rei and Vira; character select v1; Versus CPU and Two Players on the new roster | done |
 | A5 | Heroes Ekalavya and Abhimanyu; Practice mode; Gallery scene | done |
-| A6 | Heroes Karna and Ghatotkacha; Arcade mode and unlocks | todo |
+| A6 | Heroes Karna and Ghatotkacha; Arcade mode and unlocks | done |
 | A7 | Heroes Parashurama and Ashwatthama (stances); balance script and AI tuning | todo |
 | A8 | Campaign: data for eight chapters, chapter scenes, choices, saves, tutorial hints, unlocks | todo |
 | A9 | Polish: status labels and accessibility pass, chapter palettes, pause move list, final docs and summary | todo |

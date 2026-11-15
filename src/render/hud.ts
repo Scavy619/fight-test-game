@@ -195,6 +195,8 @@ export interface HudInfo {
   /** Each fighter's `look.accent`. */
   accents: readonly [string, string];
   maxHealth: readonly [number, number];
+  /** Replaces the rematch prompt at match end (null hides it). */
+  endPrompt?: string | null;
 }
 
 /** Parallelogram for side i between fractions [a, b] of the bar, measured from the inner end. */
@@ -365,11 +367,12 @@ function drawAnnouncer(ctx: CanvasRenderingContext2D, s: MatchState, hud: HudSta
   ctx.fillStyle = '#FFFFFF';
   ctx.fillText(a.text, 0, 0);
   ctx.restore();
-  if (a.prompt && hud.frame % 60 < 40) {
+  const prompt = info.endPrompt === undefined ? a.prompt : (a.prompt ? info.endPrompt ?? undefined : undefined);
+  if (prompt && hud.frame % 60 < 40) {
     ctx.font = font(20);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillText(a.prompt, ANNOUNCE_X, 370);
+    ctx.fillText(prompt, ANNOUNCE_X, 370);
   }
 }

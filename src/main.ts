@@ -13,6 +13,7 @@ import {
   stepGame,
   type GameContext,
 } from './engine';
+import { ROSTER } from './content/roster';
 import { createMainMenuScene, isMode, startMode } from './scenes';
 
 const canvas = document.getElementById('game');
@@ -31,6 +32,9 @@ const mouse = new MouseInput(canvasToLogical(canvas, LOGICAL_WIDTH, LOGICAL_HEIG
 mouse.attach(canvas);
 
 const game: GameContext = { ctx, width, height, input, mouse, scenes, menu: new MenuInput(), save: new SaveStore() };
+
+// `?unlock=all` unlocks every hero in this browser's save (for playtesting before the campaign exists).
+if (new URLSearchParams(window.location.search).get('unlock') === 'all') for (const r of ROSTER) game.save.unlock(r.id);
 
 // `?debug=input` shows live inputs; `?mode=versus|easy|normal|hard` skips the menu.
 const params = new URLSearchParams(window.location.search);

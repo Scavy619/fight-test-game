@@ -60,3 +60,9 @@ export function createControlsScreen(game: GameContext, o: ControlsScreenOptions
     },
   };
 }
+
+/** Shows the controls screen first when the player has never seen it, then runs `start`. */
+export function withControlsGate(game: GameContext, solo: boolean, start: () => void): void {
+  if (game.save.data.seenControls) return start();
+  game.scenes.set(createControlsScreen(game, { solo, onDone: start }));
+}

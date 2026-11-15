@@ -58,6 +58,12 @@ export interface FightConfig {
   hideControls?: boolean;
   /** Stage colours (chapter or mode); default is the neon palette. */
   palette?: StagePalette;
+  /** Arcade and campaign: no rematch or back-out at match end; `onMatchEnd` takes over. */
+  noRematch?: boolean;
+  /** Called once, about a second and a half after the match ends, with the winner. */
+  onMatchEnd?: (winner: PlayerIndex) => void;
+  /** Text under the match-end banner (default: the rematch prompt; null hides it). */
+  endPrompt?: string | null;
   /** Called every step after the sim step (Practice refills health and handles its keys). */
   onStep?: (api: FightApi) => void;
   /** Drawn last, over the HUD (the solo action bar). */
@@ -73,6 +79,8 @@ const FLASH_ALPHA = 0.18;
 const FLASH_FRAMES = 4;
 const SPARK_SIZE: Readonly<Record<Strength, number>> = { light: 38, heavy: 50, special: 56, ultimate: 64 };
 const FREEZE_DIM = 'rgba(0,0,0,0.7)';
+/** Steps the match-end banner stays up before `onMatchEnd` fires. */
+const MATCH_END_HOLD = 100;
 
 export function createFightScene(game: GameContext, config: FightConfig): Scene {
   const entries = config.fighters;
@@ -87,6 +95,7 @@ export function createFightScene(game: GameContext, config: FightConfig): Scene 
     names: [defs[0].name, defs[1].name],
     accents,
     maxHealth: [defs[0].stats.health, defs[1].stats.health],
+    endPrompt: config.endPrompt,
   };
   const hud = new HudState(info.maxHealth);
   const sparks = new Sparks();
@@ -100,6 +109,7 @@ export function createFightScene(game: GameContext, config: FightConfig): Scene 
   let flashLeft = 0;
   let debugBoxes = false;
   let debugKeyHeld = false;
+  let endFrames = 0;
 
   function newMatch(): Match {
     return createMatch({
@@ -175,7 +185,7 @@ export function createFightScene(game: GameContext, config: FightConfig): Scene 
   }
 
   function updateMatchEnd(clicked: boolean): boolean {
-    if (match.state.phase !== 'matchEnd') return false;
+    if (match.state.phase !== 'matchEnd' || config.noRematch) return false;
     const a = game.menu.actions;
     if (a.confirm || clicked) {
       game.menu.latch();
@@ -237,6 +247,12 @@ export function createFightScene(game: GameContext, config: FightConfig): Scene 
       shakeX = shakeY = 0;
     }
     if (flashLeft > 0) flashLeft -= 1;
+    if (st.phase === 'matchEnd') {
+      endFrames += 1;
+      if (endFrames === MATCH_END_HOLD && config.onMatchEnd) config.onMatchEnd(st.winner ?? 0);
+    } else {
+      endFrames = 0;
+    }
     config.onStep?.(api);
   }
 

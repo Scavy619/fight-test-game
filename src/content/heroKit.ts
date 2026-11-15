@@ -45,10 +45,17 @@ export function tipBox(look: FighterLook, spec: PoseSpec, o: TipBoxOptions = {})
 }
 
 /** The front hand and weapon tip (local px) in a pose; used to place projectiles and effects. */
-export function weaponPoints(look: FighterLook, spec: PoseSpec): { hand: { x: number; y: number }; tip: { x: number; y: number } } {
+export function weaponPoints(
+  look: FighterLook,
+  spec: PoseSpec,
+): { hand: { x: number; y: number }; handB: { x: number; y: number }; tip: { x: number; y: number } } {
   const rig = createRigState();
   computeRig(pose(spec), look, rig);
-  return { hand: { x: Math.round(rig.handF.x), y: Math.round(rig.handF.y) }, tip: { x: Math.round(rig.weaponTip.x), y: Math.round(rig.weaponTip.y) } };
+  return {
+    hand: { x: Math.round(rig.handF.x), y: Math.round(rig.handF.y) },
+    handB: { x: Math.round(rig.handB.x), y: Math.round(rig.handB.y) },
+    tip: { x: Math.round(rig.weaponTip.x), y: Math.round(rig.weaponTip.y) },
+  };
 }
 
 export interface AttackShape {

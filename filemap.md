@@ -72,6 +72,10 @@
 - `src/content/heroKit.ts` — authoring helpers: `tipBox` and `weaponPoints` (hitboxes and projectile spawns from the strike pose), `attackAnim`, `idleAnim`, `walkKeys`, `info`, shared cancel lists.
 - `src/content/roster.ts` — the full eight-hero roster (names, titles, unlock text) the select screen shows, including heroes not written yet.
 - `src/content/heroes/heroes.test.ts` — tests every hero must pass (validation, animation lengths, weapon tip versus hitbox, projectile spawns, walk stride, grab and power rules, profile completeness, lore). `combos.test.ts`: random combo bounds over every pairing. `chains.test.ts`: light, light, heavy as one combo and the ultimate trigger.
+- `src/scenes/arcade.ts` — Arcade: hero pick, ladder fights, continue and ending cards, saves the clear and grants unlocks.
+- `src/scenes/card.ts` — `createCard`: heading, progress dots, portraits, wrapped text and choices (Arcade now, the campaign later).
+- `src/content/unlocks.ts` — `UNLOCK_RULES`, `unlocksFor`, `grantUnlocks`; `src/content/arcade.ts` — `ARCADE_RIVALS`, `buildLadder`, `ARCADE_ENDINGS`; `src/content/unlocks.test.ts` tests both.
+- `src/content/heroes/karna.ts`, `ghatotkacha.ts` — the third pair of heroes.
 - `src/scenes/practice.ts` — Practice: dummy menu, `startPractice`, dummy controllers, move-list HUD, reset and refill hooks.
 - `src/scenes/gallery.ts` — Character gallery: grid, hero detail tabs (`tabContent`, pure), animated preview (`previewAnims`).
 - `src/scenes/soloControls.ts` — `createSoloHuman`: keyboard, pad and mouse human controller plus the action bar overlay.
