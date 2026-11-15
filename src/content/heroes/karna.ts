@@ -207,8 +207,8 @@ export const KARNA_DEF: FighterDef = {
   name: 'Karna',
   element: 'fire',
   stats: {
-    health: 1000, walkSpeed: 4.4, backSpeed: 3.6, jumpVelocity: 15, jumpForwardSpeed: 4.8, gravity: 0.85,
-    width: 64, height: 182, crouchHeight: 108,
+    health: 930, walkSpeed: 4.4, backSpeed: 3.6, jumpVelocity: 15, jumpForwardSpeed: 4.8, gravity: 0.85,
+    width: 64, height: 182, crouchHeight: 108, power: 0.95,
   },
   moves: {
     light, heavy, crouchLight, crouchHeavy, airLight, airHeavy, specialN, specialF, specialD, ultimate,

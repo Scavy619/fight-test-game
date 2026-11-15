@@ -214,8 +214,8 @@ export const ABHIMANYU_DEF: FighterDef = {
   name: 'Abhimanyu',
   element: 'lightning',
   stats: {
-    health: 900, walkSpeed: 5.4, backSpeed: 4.2, jumpVelocity: 16, jumpForwardSpeed: 5.6, gravity: 0.85,
-    width: 58, height: 170, crouchHeight: 100,
+    health: 1250, walkSpeed: 5.4, backSpeed: 4.2, jumpVelocity: 16, jumpForwardSpeed: 5.6, gravity: 0.85,
+    width: 58, height: 170, crouchHeight: 100, power: 1.22,
   },
   moves: {
     light, heavy, crouchLight, crouchHeavy, airLight, airHeavy, specialN, specialF, specialD, ultimate,

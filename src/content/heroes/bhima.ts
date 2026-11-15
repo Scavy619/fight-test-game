@@ -204,8 +204,8 @@ export const BHIMA_DEF: FighterDef = {
   name: 'Bhima',
   element: 'earth',
   stats: {
-    health: 1150, walkSpeed: 3.4, backSpeed: 2.6, jumpVelocity: 13.5, jumpForwardSpeed: 3.6, gravity: 0.8,
-    width: 78, height: 188, crouchHeight: 112,
+    health: 1000, walkSpeed: 3.4, backSpeed: 2.6, jumpVelocity: 13.5, jumpForwardSpeed: 3.6, gravity: 0.8,
+    width: 78, height: 188, crouchHeight: 112, power: 0.86,
   },
   moves: {
     light, heavy, crouchLight, crouchHeavy, airLight, airHeavy, specialN, specialF, specialD, ultimate,

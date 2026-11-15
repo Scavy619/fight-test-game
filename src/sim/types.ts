@@ -218,6 +218,8 @@ export interface FighterStats {
   width: number;
   height: number;
   crouchHeight: number;
+  /** Multiplier on all damage (and chip) this fighter deals; 1 when absent. A balance knob alongside health. */
+  power?: number;
 }
 
 export interface FighterDef {

@@ -67,7 +67,11 @@ describe.each(entries)('%s', (id, entry) => {
   });
 
   it('every fx tag has a visual and every visual is used', () => {
-    const tags = new Set(MOVE_SLOTS.flatMap((s) => (def.moves[s].fx ?? []).map((f) => f.tag)));
+    const stanceMoves = (def.stances?.moves ?? []).flatMap((o) => Object.values(o));
+    const tags = new Set([
+      ...MOVE_SLOTS.flatMap((s) => (def.moves[s].fx ?? []).map((f) => f.tag)),
+      ...stanceMoves.flatMap((m) => (m?.fx ?? []).map((f) => f.tag)),
+    ]);
     const visuals = entry.visuals ?? {};
     for (const tag of tags) expect(visuals[tag], tag).toBeDefined();
     for (const tag of Object.keys(visuals)) expect(tags.has(tag), tag).toBe(true);
@@ -101,6 +105,25 @@ describe.each(entries)('%s', (id, entry) => {
     }
     expect(problems).toEqual([]);
     expect(checked).toBeGreaterThan(4);
+  });
+
+  it('stance override moves have animations as long as the move and spawn projectiles at a hand', () => {
+    const rig = createRigState();
+    for (const [k, overrides] of (def.stances?.moves ?? []).entries()) {
+      for (const [slot, m] of Object.entries(overrides)) {
+        if (!m) continue;
+        const a = anims[m.anim];
+        expect(a, `${slot} stance ${k}`).toBeDefined();
+        if (!a) continue;
+        expect(m.anim, slot).toBe(`${id}.${slot}.s${k}`);
+        expect(animDuration(a), m.anim).toBe(moveTotal(m));
+        if (m.projectile) {
+          computeRig(samplePose(a, m.projectile.frame), look, rig);
+          const d = Math.min(...[rig.handF, rig.handB, rig.weaponTip].map((q) => Math.hypot(q.x - (m.projectile?.x ?? 0), q.y - (m.projectile?.y ?? 0))));
+          expect(d, m.anim).toBeLessThan(TIP_TOLERANCE);
+        }
+      }
+    }
   });
 
   it('projectiles spawn at the hand or the weapon tip', () => {

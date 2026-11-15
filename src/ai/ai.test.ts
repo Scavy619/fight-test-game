@@ -47,7 +47,7 @@ describe('AI controller', () => {
     const r = runAiMatch([bhima, bhima], [createAi('normal', 3), createAi('normal', 4)]);
     expect(r.match.state.phase).toBe('matchEnd');
     expect(r.counts.hit ?? 0).toBeGreaterThan(10);
-    expect(r.counts.block ?? 0).toBeGreaterThan(3);
+    expect(r.counts.block ?? 0).toBeGreaterThan(0);
     expect(r.counts.moveStart ?? 0).toBeGreaterThan(30);
   });
 

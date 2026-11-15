@@ -5,7 +5,7 @@
 // seeded RNG, so a run is reproducible for a seed.
 import {
   EMPTY_INPUT, METER_MAX, STAGE_LEFT, STAGE_RIGHT,
-  canCancelInto, isActionable, isAirborne, lastHitboxFrame, moveFor, moveReach,
+  canCancelInto, isActionable, isAirborne, lastHitboxFrame, moveFor, moveInStance, moveReach,
   type FighterDef, type FighterState, type InputFrame, type Match, type MoveDef, type MoveSlot,
   type PlayerIndex, type Projectile,
 } from '../sim';
@@ -49,6 +49,10 @@ export type AiController = (match: Match, index: PlayerIndex) => InputFrame;
 
 /** Frames a pressed button is held (the sim buffers the press for 6). */
 const PRESS_FRAMES = 2;
+/** Heroes whose own light reaches less than this (px) and who have a quick projectile play as zoners. */
+const ZONER_MELEE_REACH = 140;
+/** Slots a hero may fire projectiles from (stance overrides included via moveFor). */
+const RANGED_SLOTS: readonly MoveSlot[] = ['specialN', 'specialD', 'specialF', 'heavy', 'light'];
 /** Distance from a wall at which the AI counts itself cornered. */
 const CORNER_MARGIN = 90;
 /** Extra px the AI allows itself when judging whether an attack reaches. */
@@ -64,6 +68,7 @@ interface OppView {
   x: number;
   y: number;
   vx: number;
+  stance: number;
 }
 
 interface Press {
@@ -79,8 +84,8 @@ interface Reach {
   specialF: number; specialD: number; airHeavy: number; ultimate: number; throw: number;
 }
 
-function reachTable(def: FighterDef): Reach {
-  const r = (slot: MoveSlot): number => moveReach(def.moves[slot]);
+function reachTable(def: FighterDef, f: FighterState): Reach {
+  const r = (slot: MoveSlot): number => moveReach(moveFor(def, f, slot));
   return {
     light: r('light'), crouchLight: r('crouchLight'), heavy: r('heavy'), crouchHeavy: r('crouchHeavy'),
     specialF: r('specialF'), specialD: r('specialD'), airHeavy: r('airHeavy'), ultimate: r('ultimate'),
@@ -118,7 +123,6 @@ export function createAi(difficulty: Difficulty | AiParams, seed: number): AiCon
   let threatSeen = false;
   let threatPlan: 'block' | 'dodge' | 'jump' | 'ignore' = 'ignore';
   let airSeen = false;
-  let reach: Reach | null = null;
 
   function reset(): void {
     history = [];
@@ -147,11 +151,11 @@ export function createAi(difficulty: Difficulty | AiParams, seed: number): AiCon
     const def = match.defs[index];
     const oppIndex: PlayerIndex = index === 0 ? 1 : 0;
     const oppDef = match.defs[oppIndex];
-    reach ??= reachTable(def);
     const f = s.fighters[index];
     const o = s.fighters[oppIndex];
+    const reach = reachTable(def, f);
 
-    history.push({ state: o.state, move: o.move, moveFrame: o.moveFrame, x: o.x, y: o.y, vx: o.vx });
+    history.push({ state: o.state, move: o.move, moveFrame: o.moveFrame, x: o.x, y: o.y, vx: o.vx, stance: o.stance });
     while (history.length > p.reaction + 1) history.shift();
     const delayed = history[0] ?? history[history.length - 1];
     if (s.phase !== 'fight' || !delayed) return { ...EMPTY_INPUT };
@@ -162,6 +166,18 @@ export function createAi(difficulty: Difficulty | AiParams, seed: number): AiCon
     const gap = Math.abs(o.x - f.x) - oppDef.stats.width / 2;
     const cornered = toward === 1 ? f.x < STAGE_LEFT + CORNER_MARGIN : f.x > STAGE_RIGHT - CORNER_MARGIN;
     const reaches = (r: number): boolean => r + REACH_SLACK >= gap;
+
+    // What this hero can do from range, given its current stance.
+    const projSlots = RANGED_SLOTS.filter((sl) => {
+      const m = moveFor(def, f, sl);
+      return m.projectile !== undefined && m.projectile.damage >= 20;
+    });
+    const quickShot = projSlots.some((sl) => moveFor(def, f, sl).startup <= 16);
+    const oppReach = Math.max(moveReach(oppDef.moves.light), moveReach(oppDef.moves.heavy));
+    // A zoner prefers to keep out of the opponent's melee reach and shoot.
+    const zoner = quickShot && reach.light < ZONER_MELEE_REACH && reach.light <= oppReach + 10;
+    const ultMelee = reach.ultimate > 0;
+    const ultZone = moveFor(def, f, 'ultimate').zone !== undefined || moveFor(def, f, 'ultimate').projectile !== undefined;
 
     const setDir = (dir: 1 | -1 | 0): void => {
       out.left = dir === -1;
@@ -185,13 +201,13 @@ export function createAi(difficulty: Difficulty | AiParams, seed: number): AiCon
     // Threat detection on the delayed view.
     let incoming: MoveDef | null = null;
     if (view.state === 'attack' && view.move !== null) {
-      const m = oppDef.moves[view.move];
+      const m = moveInStance(oppDef, view.stance, view.move);
       if (view.moveFrame <= lastHitboxFrame(m) && !m.projectile && moveReach(m) + def.stats.width / 2 + 40 >= gap) incoming = m;
     }
     const recovering =
       (view.state === 'attack' && view.move !== null &&
-        view.moveFrame > lastHitboxFrame(oppDef.moves[view.move]) &&
-        view.moveFrame + 6 <= moveTotalOf(oppDef.moves[view.move])) ||
+        view.moveFrame > lastHitboxFrame(moveInStance(oppDef, view.stance, view.move)) &&
+        view.moveFrame + 6 <= moveTotalOf(moveInStance(oppDef, view.stance, view.move))) ||
       view.state === 'land' || view.state === 'getup';
     const projectile = s.projectiles.find((q: Projectile) =>
       q.owner === oppIndex && (q.x < f.x) === (q.vx > 0) && Math.abs(q.x - f.x) < Math.abs(q.vx) * (p.reaction + 12) + 70,
@@ -202,7 +218,7 @@ export function createAi(difficulty: Difficulty | AiParams, seed: number): AiCon
     if (f.state === 'attack' && f.move !== null && f.moveConnected) {
       const cancels = moveFor(def, f, f.move).cancels;
       if (cancels && f.moveFrame <= cancels.until && !rng.chance(p.mistake * 0.5)) {
-        const slot = pickCancel(cancels.into, f, def, reaches, o);
+        const slot = pickCancel(cancels.into, f, def, reaches, o, gap);
         if (slot && canCancelInto(f, def, slot)) {
           startPress(slot);
           return applyPress();
@@ -272,7 +288,7 @@ export function createAi(difficulty: Difficulty | AiParams, seed: number): AiCon
     }
 
     // 5. Ultimate with a full meter when it reaches.
-    if (f.meter >= METER_MAX && reaches(reach.ultimate) && rng.chance(p.aggression)) {
+    if (f.meter >= METER_MAX && ((ultMelee && reaches(reach.ultimate) && fitsLeap(moveFor(def, f, 'ultimate'), reach.ultimate, gap)) || (ultZone && gap < 520)) && rng.chance(p.aggression)) {
       startPress('ultimate');
       return applyPress();
     }
@@ -283,7 +299,7 @@ export function createAi(difficulty: Difficulty | AiParams, seed: number): AiCon
       if (!airSeen) {
         airSeen = true;
         const closing = Math.sign(view.vx) === -toward || gap < 120;
-        if (closing && reaches(reach.specialD + 30) && rng.chance(p.antiAir)) {
+        if (closing && isAntiAir(moveFor(def, f, 'specialD')) && reaches(reach.specialD + 30) && rng.chance(p.antiAir)) {
           startPress('specialD');
           return applyPress();
         }
@@ -313,7 +329,7 @@ export function createAi(difficulty: Difficulty | AiParams, seed: number): AiCon
     else intentLeft -= 1;
     switch (intent) {
       case 'approach':
-        if (gap > reach.light * 0.75) setDir(toward);
+        if (zoner ? gap > 430 : gap > reach.light * 0.75) setDir(toward);
         break;
       case 'retreat':
         setDir(cornered ? toward : toward === 1 ? -1 : 1);
@@ -350,6 +366,36 @@ export function createAi(difficulty: Difficulty | AiParams, seed: number): AiCon
         setIntent(gap > reach.light ? 'approach' : 'wait', 6);
         return;
       }
+      // Stance: switch to the stance that suits the distance.
+      const sw = moveFor(def, f, 'specialF').switchStance;
+      if (def.stances && sw !== undefined) {
+        if (f.stance === 0 && gap > 330 && rng.chance(0.5)) return startPress('specialF');
+        if (f.stance !== 0 && gap < 190 && rng.chance(0.5)) return startPress('specialF');
+      }
+      // A temporary guard before a close fight.
+      if (moveFor(def, f, 'specialD').grants && !f.shield && gap > 80 && gap < 280 && rng.chance(0.3 + p.aggression * 0.2)) {
+        return startPress('specialD');
+      }
+      // Zone setters: a decoy near, a slow field a little further.
+      const zn = moveFor(def, f, 'specialN').zone;
+      if (zn?.kind === 'decoy' && !s.zones.some((z) => z.owner === index && z.kind === 'decoy') && gap > 120 && gap < 320 && rng.chance(0.3)) {
+        return startPress('specialN');
+      }
+      const zf = moveFor(def, f, 'specialF').zone;
+      if (zf?.kind === 'slow' && !s.zones.some((z) => z.owner === index && z.kind === 'slow') && gap > 150 && gap < 340 && rng.chance(0.3)) {
+        return startPress('specialF');
+      }
+      // Zoners back away from the opponent's reach instead of trading in it.
+      if (zoner && gap < oppReach + 50 && !cornered && rng.chance(0.65)) {
+        setIntent('retreat', p.think);
+        return;
+      }
+      // Ranged options from a safe distance.
+      if (projSlots.length > 0 && gap >= 150 && rng.chance(0.4 + p.aggression * 0.3)) {
+        const far = gap > 380;
+        const pick = far ? projSlots[rng.int(projSlots.length)] : projSlots[0];
+        if (pick) return startPress(pick);
+      }
       // Grab a standing or blocking opponent in reach (never one already stunned or airborne).
       const grabbable = (view.state === 'block' || view.state === 'idle' || view.state === 'walk' || view.state === 'crouch') && view.y <= 0;
       if (grabbable && reaches(reach.throw) && rng.chance(view.state === 'block' ? p.aggression * 0.8 : p.aggression * 0.3)) {
@@ -369,7 +415,6 @@ export function createAi(difficulty: Difficulty | AiParams, seed: number): AiCon
       if (p.aggression >= 0.7 && reaches(reach.heavy) && rng.chance(0.08)) return startPress('power');
       if (reaches(reach.heavy) && rng.chance(p.aggression * 0.6)) return startPress('heavy');
       if (reaches(reach.specialF) && rng.chance(p.aggression * 0.4)) return startPress('specialF');
-      if (gap > 360 && def.moves.specialN.projectile && rng.chance(0.2 + p.aggression * 0.25)) return startPress('specialN');
       if (gap > 220 && rng.chance(p.aggression * 0.15)) return setIntent('jumpIn', 4);
       if (rng.chance(p.aggression + 0.25)) setIntent('approach', p.think);
       else setIntent(rng.chance(0.5) ? 'retreat' : 'wait', p.think);
@@ -382,15 +427,31 @@ export function createAi(difficulty: Difficulty | AiParams, seed: number): AiCon
   };
 }
 
+/** A move that leaves the ground (a leap): it overshoots a close opponent. */
+function leaps(m: MoveDef): boolean {
+  return (m.velocity ?? []).some((v) => (v.vy ?? 0) > 0);
+}
+
+/** Leaps only make sense at a distance near their landing spot. */
+function fitsLeap(m: MoveDef, reach: number, gap: number): boolean {
+  return !leaps(m) || gap >= reach * 0.5;
+}
+
+/** An invulnerable damaging special that can beat a jump-in (a rising cut), as opposed to a leap or an evade. */
+function isAntiAir(m: MoveDef): boolean {
+  return m.damage > 0 && m.invulnerable !== undefined && m.hitboxes.length > 0 && !leaps(m);
+}
+
 function moveTotalOf(m: MoveDef): number {
   return m.startup + m.active + m.recovery;
 }
 
 /** Next combo link: ultimate when full, else a special that reaches, else a heavy, else a light. */
 function pickCancel(
-  into: readonly MoveSlot[], f: FighterState, def: FighterDef, reaches: (r: number) => boolean, o: FighterState,
+  into: readonly MoveSlot[], f: FighterState, def: FighterDef, reaches: (r: number) => boolean, o: FighterState, gap: number,
 ): MoveSlot | null {
-  if (f.meter >= METER_MAX && into.includes('ultimate')) return 'ultimate';
+  const ult = moveFor(def, f, 'ultimate');
+  if (f.meter >= METER_MAX && into.includes('ultimate') && fitsLeap(ult, moveReach(ult), gap)) return 'ultimate';
   const airborne = isAirborne(f);
   const order: MoveSlot[] = airborne
     ? ['airHeavy', 'airLight']
@@ -399,9 +460,18 @@ function pickCancel(
       : ['specialF', 'specialN', 'specialD', 'heavy', 'crouchHeavy', 'light', 'crouchLight'];
   for (const slot of order) {
     if (!into.includes(slot)) continue;
-    if (slot === 'specialN' && !def.moves.specialN.projectile && !reaches(moveReach(def.moves.specialN))) continue;
-    if (slot !== 'specialN' && !reaches(moveReach(def.moves[slot]) + 20)) continue;
+    const m = moveFor(def, f, slot);
+    // Utility specials (no damage: shields, evades, stance switches, decoys) never continue a combo.
+    if (isSpecial(slot) && m.damage <= 0 && m.zone === undefined) continue;
+    if (m.damage <= 0) continue;
+    const r = moveReach(m);
+    if (slot === 'specialN' && m.projectile) return slot;
+    if (!reaches(r + 20) || !fitsLeap(m, r, gap)) continue;
     return slot;
   }
   return null;
+}
+
+function isSpecial(slot: MoveSlot): boolean {
+  return slot === 'specialN' || slot === 'specialF' || slot === 'specialD';
 }

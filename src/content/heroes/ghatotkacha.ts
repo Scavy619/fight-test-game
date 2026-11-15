@@ -21,7 +21,7 @@ export const GHATOTKACHA_LOOK: FighterLook = {
   bulk: 1.25,
   headStyle: 'curls',
   ribbon: 'cape',
-  weapon: { type: 'mace', length: 124, color: '#B9A6FF' },
+  weapon: { type: 'mace', length: 112, color: '#B9A6FF' },
 };
 
 const { CROUCH, TUCK } = BASE_POSES;
@@ -207,8 +207,8 @@ export const GHATOTKACHA_DEF: FighterDef = {
   name: 'Ghatotkacha',
   element: 'shadow',
   stats: {
-    health: 1100, walkSpeed: 3.8, backSpeed: 3.0, jumpVelocity: 16.5, jumpForwardSpeed: 4.6, gravity: 0.8,
-    width: 84, height: 202, crouchHeight: 122,
+    health: 1300, walkSpeed: 3.8, backSpeed: 3.0, jumpVelocity: 16.5, jumpForwardSpeed: 4.6, gravity: 0.8,
+    width: 84, height: 202, crouchHeight: 122, power: 1.25,
   },
   moves: {
     light, heavy, crouchLight, crouchHeavy, airLight, airHeavy, specialN, specialF, specialD, ultimate,

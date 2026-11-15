@@ -203,8 +203,8 @@ export const ARJUNA_DEF: FighterDef = {
   name: 'Arjuna',
   element: 'wind',
   stats: {
-    health: 900, walkSpeed: 4.6, backSpeed: 3.8, jumpVelocity: 15.5, jumpForwardSpeed: 5.0, gravity: 0.85,
-    width: 62, height: 178, crouchHeight: 106,
+    health: 1010, walkSpeed: 4.6, backSpeed: 3.8, jumpVelocity: 15.5, jumpForwardSpeed: 5.0, gravity: 0.85,
+    width: 62, height: 178, crouchHeight: 106, power: 1.1,
   },
   moves: {
     light, heavy, crouchLight, crouchHeavy, airLight, airHeavy, specialN, specialF, specialD, ultimate,

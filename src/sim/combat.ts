@@ -143,7 +143,7 @@ function applyBlock(ctx: Ctx, p: PendingHit, crouching: boolean): void {
   const { hit } = p;
   const before = d.health;
   // Chip never takes the last point of health.
-  if (d.health > 1) d.health = Math.max(1, d.health - Math.round(hit.damage * hit.chip * s.damageScale[p.attacker]));
+  if (d.health > 1) d.health = Math.max(1, d.health - Math.round(hit.damage * hit.chip * s.damageScale[p.attacker] * (ctx.defs[p.attacker].stats.power ?? 1)));
   const chip = before - d.health;
 
   interruptDefender(d);
@@ -178,7 +178,7 @@ function applyHit(ctx: Ctx, p: PendingHit, wasAirborne: boolean, wasCrouching: b
   a.combo = continues ? a.combo + 1 : 1;
   if (!continues) a.comboDamage = 0;
   const scale = Math.max(COMBO_SCALING_FLOOR, COMBO_SCALING ** (a.combo - 1));
-  const damage = Math.round(hit.damage * scale * s.damageScale[p.attacker]);
+  const damage = Math.round(hit.damage * scale * s.damageScale[p.attacker] * (ctx.defs[p.attacker].stats.power ?? 1));
   const before = d.health;
   d.health = Math.max(0, d.health - damage);
   a.comboDamage += before - d.health;

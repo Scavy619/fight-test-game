@@ -129,4 +129,40 @@ export const HERO_LORE: Record<string, LoreEntry> = {
       { label: 'Mahabharata (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Mahabharata' },
     ],
   },
+  parashurama: {
+    id: 'parashurama',
+    name: 'Parashurama',
+    tagline: 'The Axe-Bearing Teacher',
+    tradition: [
+      'Parashurama is a warrior-sage in the Puranas and the Mahabharata, the son of the sage Jamadagni and Renuka, remembered for his axe, the parashu. Many traditions regard him as an avatar of Vishnu and he is revered today; this game plays him as a teacher and warrior, by our own choice, and depicts no deity.',
+      'In the Mahabharata he teaches Bhishma, Drona and Karna. Tales of his long feud with warrior kings, and of his withdrawal to a mountain hermitage, differ widely between traditions and are not retold here.',
+    ],
+    inThisGame: [
+      'Our Parashurama is an austere teacher who returns to train the younger heroes after recognising the signs of a power he once believed contained. He warns that mastery without judgment can destroy what it intends to protect.',
+      'He is written with discipline and concern, never as uncontrolled rage. His axe is his own weapon, and he draws it only after choosing to guide first.',
+    ],
+    sources: [
+      { label: 'Parashurama (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Parashurama' },
+      { label: 'Karna (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Karna' },
+      { label: 'Mahabharata (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Mahabharata' },
+    ],
+  },
+  ashwatthama: {
+    id: 'ashwatthama',
+    name: 'Ashwatthama',
+    tagline: 'The Wounded Veteran',
+    tradition: [
+      'Ashwatthama is the son of the teacher Drona in the Mahabharata, a skilled warrior who fights for the Kauravas. After the war he commits a night raid on the Pandava camp and later uses a terrible weapon, and in many tellings he is cursed to wander. His deeds are widely seen as among the epic’s darkest.',
+      'Tellings differ on the details, and he is read as both a figure of grief and a warning about vengeance.',
+    ],
+    inThisGame: [
+      'Our Ashwatthama pursues the corrupted power, believing it could undo an old loss. A quiet moment reveals the doubt beneath his anger, and the heroes must stop his escalating choices while understanding his grief.',
+      'He is a complex antagonist, never a monster. His harmful choices are plain, and so is the pain behind them. The night raid is not shown; the story is about what is owed to someone who is hurting and to those he endangers.',
+    ],
+    sources: [
+      { label: 'Ashwatthama (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Ashwatthama' },
+      { label: 'Drona (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Drona' },
+      { label: 'Mahabharata (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Mahabharata' },
+    ],
+  },
 };

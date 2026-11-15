@@ -201,7 +201,7 @@ export const EKALAVYA_DEF: FighterDef = {
   name: 'Ekalavya',
   element: 'wind',
   stats: {
-    health: 950, walkSpeed: 5.0, backSpeed: 4.0, jumpVelocity: 15, jumpForwardSpeed: 5.2, gravity: 0.85,
+    health: 940, walkSpeed: 5.0, backSpeed: 4.0, jumpVelocity: 15, jumpForwardSpeed: 5.2, gravity: 0.85,
     width: 60, height: 172, crouchHeight: 102,
   },
   moves: {

@@ -75,6 +75,9 @@
 - `src/scenes/arcade.ts` — Arcade: hero pick, ladder fights, continue and ending cards, saves the clear and grants unlocks.
 - `src/scenes/card.ts` — `createCard`: heading, progress dots, portraits, wrapped text and choices (Arcade now, the campaign later).
 - `src/content/unlocks.ts` — `UNLOCK_RULES`, `unlocksFor`, `grantUnlocks`; `src/content/arcade.ts` — `ARCADE_RIVALS`, `buildLadder`, `ARCADE_ENDINGS`; `src/content/unlocks.test.ts` tests both.
+- `scripts/balance.ts` — AI-versus-AI round robin matrix (`npm run balance`); `scripts/tune.ts` — health and power coordinate search.
+- `src/ai/balance.test.ts` — guards every hero's overall hard win rate between 25% and 75%.
+- `src/content/heroes/parashurama.ts`, `ashwatthama.ts` — the last pair of heroes (Ashwatthama has stances).
 - `src/content/heroes/karna.ts`, `ghatotkacha.ts` — the third pair of heroes.
 - `src/scenes/practice.ts` — Practice: dummy menu, `startPractice`, dummy controllers, move-list HUD, reset and refill hooks.
 - `src/scenes/gallery.ts` — Character gallery: grid, hero detail tabs (`tabContent`, pure), animated preview (`previewAnims`).
