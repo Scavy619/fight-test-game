@@ -89,7 +89,7 @@
 - `src/render/text.ts` — `wrapText`, `drawWrapped` for menu text.
 - `src/render/moveVisuals.ts` — data-driven move visuals (`column`, `burst`, `streak`) spawned from sim `fx` tags via `FighterEntry.visuals`.
 - `src/scenes/fight.ts` — the fight scene: runs the sim, animators, HUD, shake, flash; `FightConfig` takes controllers (AI hook) and event listeners (effects, audio hook). Backquote toggles the hitbox debug overlay.
-- `src/scenes/pause.ts` — minimal pause overlay; heavy (back) leaves to the menu when the fight has `onExit`.
+- `src/scenes/pause.ts` — pause overlay with controls and per-hero move list pages (`movePages`, `pause.test.ts`); heavy (back) leaves to the menu when the fight has `onExit`.
 - `src/scenes/mainMenu.ts` — ASTRA title and main menu (Story, Arcade, Versus CPU, Two Players, Practice, Gallery, Controls; unfinished modes disabled with the slice named), `startMode` (also the `?mode=` deep link), the solo mouse controller and the controls gate before the first fight.
 - `src/scenes/listMenu.ts` — shared `ListMenu` (keyboard, mouse, pad), menu backdrop, ASTRA wordmark, adaptation notice.
 - `src/scenes/controlsScreen.ts` — full controls screen; sets `save.seenControls`.

@@ -28,7 +28,7 @@ import {
   type SimEvent,
   type Strength,
 } from '../sim';
-import { createPauseScene } from './pause';
+import { createPauseScene, movePages } from './pause';
 
 /** What a mode can do to a running fight (Practice resets, refills and reads the match). */
 export interface FightApi {
@@ -214,7 +214,7 @@ export function createFightScene(game: GameContext, config: FightConfig): Scene 
     const clicked = game.mouse.takeClick();
 
     if (game.menu.actions.pause) {
-      game.scenes.push(createPauseScene(game, { onMenu: config.onExit, solo: config.solo ?? false }));
+      game.scenes.push(createPauseScene(game, { onMenu: config.onExit, solo: config.solo ?? false, pages: movePages(config.fighters) }));
       return;
     }
     if (updateMatchEnd(clicked)) return;
